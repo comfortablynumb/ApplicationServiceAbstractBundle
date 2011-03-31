@@ -6,13 +6,13 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExce
 
 class DatabaseUnknownException extends \Exception implements ApplicationServiceExceptionInterface
 {
-	public function getFriendlyMessage()
-	{
-		return 'Ocurrio un error desconocido en la base de datos.';
-	}
-	
-	public function getType()
-	{
-		return 'DatabaseUnknownException';
-	}
+    public function getFriendlyMessage()
+    {
+        return 'Ocurrio un error desconocido en la base de datos.';
+    }
+    
+    public function getType()
+    {
+        return 'DatabaseUnknownException';
+    }
 }

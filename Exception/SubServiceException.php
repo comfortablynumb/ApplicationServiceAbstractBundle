@@ -8,7 +8,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\Appli
 
 class SubServiceException extends \Exception implements ApplicationServiceExceptionInterface
 {
-	protected $subServiceResponse = null;
+    protected $subServiceResponse = null;
     
     
     
@@ -20,9 +20,9 @@ class SubServiceException extends \Exception implements ApplicationServiceExcept
     }
     
     public function getType()
-	{
-		return 'SubServiceException';
-	}
+    {
+        return 'SubServiceException';
+    }
     
     public function setSubServiceResponse( ApplicationServiceResponseInterface $response )
     {

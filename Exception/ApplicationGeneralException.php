@@ -6,8 +6,8 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExce
 
 class ApplicationGeneralException extends \Exception implements ApplicationServiceExceptionInterface
 {
-	public function getType()
-	{
-		return 'ApplicationGeneralException';
-	}
+    public function getType()
+    {
+        return 'ApplicationGeneralException';
+    }
 }

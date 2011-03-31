@@ -19,14 +19,14 @@ class EventSuscriberManager
     {
         $dispatcher = $this->getDispatcher();
         $events     = $eventSuscriber->getSuscribedEvents();
-		
-		if ( !is_array( $events ) )
-		{
-			throw new \InvalidArgumentException( sprintf( 'La clase "%s" debe devolver del método "%s" un array de eventos de la clase "%s"',
-				get_class( $suscriber ),
-				'getSuscribedEvents',
-				'ApplicationService' ) );
-		}        
+        
+        if ( !is_array( $events ) )
+        {
+            throw new \InvalidArgumentException( sprintf( 'La clase "%s" debe devolver del método "%s" un array de eventos de la clase "%s"',
+                get_class( $suscriber ),
+                'getSuscribedEvents',
+                'ApplicationService' ) );
+        }        
         
         foreach ( $events as $event => $method )
         {

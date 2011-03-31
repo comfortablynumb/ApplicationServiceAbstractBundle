@@ -9,114 +9,114 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager;
  */
 interface PersistenceManagerInterface
 {
-	/**
-	 * 
-	 * @param objectName
-	 */
-	function clear( $objectName );
-	function close();
+    /**
+     * 
+     * @param objectName
+     */
+    function clear( $objectName );
+    function close();
 
-	/**
-	 * 
-	 * @param object
-	 */
-	function contains( $object );
+    /**
+     * 
+     * @param object
+     */
+    function contains( $object );
 
-	/**
-	 * 
-	 * @param connection
-	 * @param configuration
-	 * @param eventManager
-	 */
-	function create( $connection, $configuration, $eventManager );
+    /**
+     * 
+     * @param connection
+     * @param configuration
+     * @param eventManager
+     */
+    function create( $connection, $configuration, $eventManager );
 
-	/**
-	 * 
-	 * @param documentName
-	 */
-	function createQueryBuilder( $documentName = null );
+    /**
+     * 
+     * @param documentName
+     */
+    function createQueryBuilder( $documentName = null );
 
-	/**
-	 * 
-	 * @param object
-	 */
-	function detach( $object );
+    /**
+     * 
+     * @param object
+     */
+    function detach( $object );
 
-	/**
-	 * 
-	 * @param options
-	 */
-	function flush( array $options = array() );
+    /**
+     * 
+     * @param options
+     */
+    function flush( array $options = array() );
 
-	/**
-	 * 
-	 * @param className
-	 */
-	function getClassMetadata( $className );
+    /**
+     * 
+     * @param className
+     */
+    function getClassMetadata( $className );
 
-	function getConfiguration();
+    function getConfiguration();
 
-	function getConnection();
+    function getConnection();
 
-	function getEventManager();
+    function getEventManager();
 
-	function getMetadataFactory();
+    function getMetadataFactory();
 
-	/**
-	 * 
-	 * @param entityName
-	 * @param identifier
-	 */
-	function getPartialReference( $entityName, $identifier );
+    /**
+     * 
+     * @param entityName
+     * @param identifier
+     */
+    function getPartialReference( $entityName, $identifier );
 
-	function getPersistenceManager();
+    function getPersistenceManager();
 
-	function getProxyFactory();
+    function getProxyFactory();
 
-	/**
-	 * 
-	 * @param entityName
-	 * @param identifier
-	 */
-	function getReference( $entityName, $identifier );
+    /**
+     * 
+     * @param entityName
+     * @param identifier
+     */
+    function getReference( $entityName, $identifier );
 
-	/**
-	 * 
-	 * @param objectName
-	 */
-	function getRepository( $objectName );
+    /**
+     * 
+     * @param objectName
+     */
+    function getRepository( $objectName );
 
-	function getUnitOfWork();
+    function getUnitOfWork();
 
-	/**
-	 * 
-	 * @param object
-	 * @param lockMode
-	 * @param lockVersion
-	 */
-	function lock( $object, $lockMode, $lockVersion );
+    /**
+     * 
+     * @param object
+     * @param lockMode
+     * @param lockVersion
+     */
+    function lock( $object, $lockMode, $lockVersion );
 
-	/**
-	 * 
-	 * @param object
-	 */
-	function merge( $object );
+    /**
+     * 
+     * @param object
+     */
+    function merge( $object );
 
-	/**
-	 * 
-	 * @param object
-	 */
-	function persist( $object );
+    /**
+     * 
+     * @param object
+     */
+    function persist( $object );
 
-	/**
-	 * 
-	 * @param object
-	 */
-	function refresh( $object );
+    /**
+     * 
+     * @param object
+     */
+    function refresh( $object );
 
-	/**
-	 * 
-	 * @param object
-	 */
-	function remove( $object );
+    /**
+     * 
+     * @param object
+     */
+    function remove( $object );
 }

@@ -12,11 +12,11 @@ class ApplicationServiceAbstractExtension extends Extension
 {
     public function load( array $config, ContainerBuilder $container )
     {
-		$loader = new XmlFileLoader( $container, new FileLocator(__DIR__ . '/../Resources/config' ) );
-		$loader->load( 'config.xml' );
+        $loader = new XmlFileLoader( $container, new FileLocator(__DIR__ . '/../Resources/config' ) );
+        $loader->load( 'config.xml' );
     }
-	
-	public function getXsdValidationBasePath()
+    
+    public function getXsdValidationBasePath()
     {
         return __DIR__.'/../Resources/config/schema';
     }

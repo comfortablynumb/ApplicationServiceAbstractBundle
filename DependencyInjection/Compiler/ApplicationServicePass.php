@@ -8,18 +8,18 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 
 class ApplicationServicePass implements CompilerPassInterface
 {
-	public function process( ContainerBuilder $container )
-	{
-		if ( $container->hasDefinition( 'application_service_abstract.event_suscriber_manager' ) )
-		{
-			// Get Suscribers
-			$suscribersIDs               = array_keys( $container->findTaggedServiceIds( 'application_service_abstract.event_suscriber' ) );
-			$suscriberManagerDefinition  = $container->getDefinition( 'application_service_abstract.event_suscriber_manager' );
+    public function process( ContainerBuilder $container )
+    {
+        if ( $container->hasDefinition( 'application_service_abstract.event_suscriber_manager' ) )
+        {
+            // Get Suscribers
+            $suscribersIDs               = array_keys( $container->findTaggedServiceIds( 'application_service_abstract.event_suscriber' ) );
+            $suscriberManagerDefinition  = $container->getDefinition( 'application_service_abstract.event_suscriber_manager' );
             
-			foreach ( $suscribersIDs as $suscriberID )
-			{
+            foreach ( $suscribersIDs as $suscriberID )
+            {
                 $suscriberManagerDefinition->addMethodCall( 'register', array( new Reference( $suscriberID ) ) );
-			}
-		}
-	}
+            }
+        }
+    }
 }
