@@ -61,7 +61,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $request                  = null;
     protected $response                 = null;
     protected $persistenceManager       = null;
-    protected $eventSuscriberManager    = null;
     protected $validator                = null;
     protected $dispatcher               = null;
     protected $session                  = null;
@@ -82,10 +81,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->setServiceResponse( $container->get( 'module_manager.response' ) );
         $this->setPersistenceManager( $container->get( 'module_manager.persistence_manager' ) );
         $this->setValidator( $container->get( 'validator' ) );
-        $this->setDispatcher( $container->get( 'event_dispatcher' ) );
+        $this->setDispatcher( $container->get( 'application_service_abstract.event_dispatcher' ) );
         $this->setSession( $container->get( 'session' ) );
         $this->setRepository( $this->getPersistenceManager()->getRepository( $this->getFullEntityClass() ) );
-        $this->setEventSuscriberManager( $container->get( 'application_service_abstract.event_suscriber_manager' ) );
         $this->setAclManager( $container->get( 'application_service_abstract.acl_manager' ) );
         $this->setFinderOperators();
         $this->setPermissions();
@@ -156,16 +154,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function getPersistenceManager()
     {
         return $this->persistenceManager;
-    }
-    
-    public function setEventSuscriberManager( $esm )
-    {
-        $this->eventSuscriberManager = $esm;
-    }
-    
-    public function getEventSuscriberManager()
-    {
-        return $this->eventSuscriberManager;
     }
     
     public function setValidator( Validator $validator )

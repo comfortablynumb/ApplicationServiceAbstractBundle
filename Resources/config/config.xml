@@ -5,14 +5,12 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="application_service_abstract.event_suscriber_manager.class">ENC\Bundle\ApplicationServiceAbstractBundle\EventSuscriberManager\EventSuscriberManager</parameter>
+        <parameter key="application_service_abstract.event_dispatcher.class">Symfony\Component\EventDispatcher\EventDispatcher</parameter>
         <parameter key="application_service_abstract.acl_manager.class">ENC\Bundle\ApplicationServiceAbstractBundle\AclManager\AclManager</parameter>
     </parameters>
 
     <services>
-        <service id="application_service_abstract.event_suscriber_manager" class="%application_service_abstract.event_suscriber_manager.class%">
-            <argument type="service" id="event_dispatcher" />
-        </service>
+        <service id="application_service_abstract.event_dispatcher" class="%application_service_abstract.event_dispatcher.class%" />
         
         <service id="application_service_abstract.acl_manager" class="%application_service_abstract.acl_manager.class%">
             <argument type="service" id="service_container" />
