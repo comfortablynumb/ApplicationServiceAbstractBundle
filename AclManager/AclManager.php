@@ -10,9 +10,9 @@ class AclManager
 {
     protected $aclProvider = null;
     
-    public function __construct( $container )
+    public function __construct( $aclProvider )
     {
-        $this->setAclProvider( $container->get( 'security.acl.provider' ) );
+        $this->setAclProvider( $aclProvider );
     }
     
     public function getAclProvider()

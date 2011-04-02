@@ -18,6 +18,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\Applic
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceManagerInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
+use ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatterInterface;
 
 abstract class ApplicationService implements ApplicationServiceInterface
 {
@@ -26,17 +27,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
     const CONCURRENCY_LOCK_PESSIMISTIC_READ     = 2;
     const CONCURRENCY_LOCK_PESSIMISTIC_WRITE    = 3;
     const CONCURRENCY_LOCK_OPTIMISTIC           = 4;
-    
-    // Event Constants
-    const EVENT_PRE_FIND                        = 'application_service.pre_find';
-    const EVENT_POST_FIND                       = 'application_service.post_find';
-    const EVENT_PRE_CREATE                      = 'application_service.pre_create';
-    const EVENT_POST_CREATE                     = 'application_service.post_create';
-    const EVENT_PRE_UPDATE                      = 'application_service.pre_update';
-    const EVENT_POST_UPDATE                     = 'application_service.post_update';
-    const EVENT_PRE_DELETE                      = 'application_service.pre_delete';
-    const EVENT_POST_DELETE                     = 'application_service.post_delete';
-    const EVENT_PRE_COMMIT                      = 'application_service.pre_commit';
     
     // Finder Special Operators for Fields
     const FILTER_NOT_EQUAL_TO                   = ':!=:';
@@ -57,36 +47,38 @@ abstract class ApplicationService implements ApplicationServiceInterface
     const PERMISSIONS_DELETE                    = 'DELETE';
     const PERMISSIONS_VIEW                      = 'VIEW';
     
-    protected $id                       = null;
-    protected $request                  = null;
-    protected $response                 = null;
-    protected $persistenceManager       = null;
-    protected $validator                = null;
-    protected $dispatcher               = null;
-    protected $session                  = null;
-    protected $concurrencyLockType      = self::CONCURRENCY_LOCK_NONE;
-    protected $repository               = null;
-    protected $services                 = array();
-    protected $isFlushAutomatic         = true;
-    protected $isSubService             = false;
-    protected $container                = null;
-    protected $aclManager               = null;
-    protected $finderOperators          = array();
-    protected $permissions              = array();
+    protected $id                           = null;
+    protected $request                      = null;
+    protected $response                     = null;
+    protected $persistenceManager           = null;
+    protected $validator                    = null;
+    protected $dispatcher                   = null;
+    protected $session                      = null;
+    protected $concurrencyLockType          = self::CONCURRENCY_LOCK_NONE;
+    protected $repository                   = null;
+    protected $services                     = array();
+    protected $isFlushAutomatic             = true;
+    protected $isSubService                 = false;
+    protected $container                    = null;
+    protected $aclManager                   = null;
+    protected $finderOperators              = array();
+    protected $permissions                  = array();
+    protected $validationErrorsFormatter    = null;
     
-    public function __construct( ContainerInterface $container )
+    public function __construct(ContainerInterface $container)
     {
-        $this->setContainer( $container );
-        $this->setServiceRequest( $container->get( 'module_manager.request' ) );
-        $this->setServiceResponse( $container->get( 'module_manager.response' ) );
-        $this->setPersistenceManager( $container->get( 'module_manager.persistence_manager' ) );
-        $this->setValidator( $container->get( 'validator' ) );
-        $this->setDispatcher( $container->get( 'application_service_abstract.event_dispatcher' ) );
-        $this->setSession( $container->get( 'session' ) );
-        $this->setRepository( $this->getPersistenceManager()->getRepository( $this->getFullEntityClass() ) );
-        $this->setAclManager( $container->get( 'application_service_abstract.acl_manager' ) );
+        $this->setContainer($container);
+        $this->setServiceRequest($container->get('application_service_abstract.request'));
+        $this->setServiceResponse($container->get('application_service_abstract.response'));
+        $this->setPersistenceManager($container->get('application_service_abstract.persistence_manager'));
+        $this->setValidator($container->get('validator'));
+        $this->setDispatcher($container->get('application_service_abstract.event_dispatcher'));
+        $this->setSession($container->get('session'));
+        $this->setRepository($this->getPersistenceManager()->getRepository($this->getFullEntityClass()));
+        $this->setAclManager($container->get('application_service_abstract.acl_manager'));
         $this->setFinderOperators();
         $this->setPermissions();
+        $this->setValidationErrorsFormatter($container->get('application_service_abstract.validation_errors_formatter'));
     }
     
     public function setFinderOperators()
@@ -124,9 +116,19 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function getPermissions()
     {
         return $this->permissions;
-    }    
+    }
+
+    public function getValidationErrorsFormatter()
+    {
+        return $this->validationErrorsFormatter;
+    }
+
+    public function setValidationErrorsFormatter(ValidationErrorsFormatterInterface $formatter)
+    {
+        $this->validationErrorsFormatter = $formatter;
+    }
     
-    public function setAclManager( $aclManager )
+    public function setAclManager($aclManager)
     {
         $this->aclManager = $aclManager;
     }
@@ -136,7 +138,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->aclManager;
     }
     
-    public function setContainer( ContainerInterface $container )
+    public function setContainer(ContainerInterface $container)
     {
         $this->container = $container;
     }
@@ -146,7 +148,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->container;
     }
     
-    public function setPersistenceManager( PersistenceManagerInterface $persistenceManager )
+    public function setPersistenceManager(PersistenceManagerInterface $persistenceManager)
     {
         $this->persistenceManager = $persistenceManager;
     }
@@ -156,7 +158,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->persistenceManager;
     }
     
-    public function setValidator( Validator $validator )
+    public function setValidator(Validator $validator)
     {
         $this->validator = $validator;
     }
@@ -166,7 +168,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->validator;
     }
     
-    public function setServiceRequest( ApplicationServiceRequestInterface $request )
+    public function setServiceRequest(ApplicationServiceRequestInterface $request)
     {
         $this->request = $request;
     }
@@ -176,7 +178,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->request;
     }
     
-    public function setServiceResponse( ApplicationServiceResponseInterface $response )
+    public function setServiceResponse(ApplicationServiceResponseInterface $response)
     {
         $this->response = $response;
     }
@@ -191,7 +193,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->repository;
     }
     
-    public function setRepository( $repository )
+    public function setRepository($repository)
     {
         $this->repository = $repository;
     }
@@ -201,7 +203,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->dispatcher;
     }
     
-    public function setDispatcher( EventDispatcher $dispatcher )
+    public function setDispatcher(EventDispatcher $dispatcher)
     {
         $this->dispatcher = $dispatcher;
     }
@@ -211,14 +213,14 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->session;
     }
     
-    public function setSession( $session )
+    public function setSession($session)
     {
         $this->session = $session;
     }
     
     public function getSecurityContext()
     {
-        return $this->getContainer()->get( 'security.context' );
+        return $this->getContainer()->get('security.context');
     }
     
     public function getUser()
@@ -226,7 +228,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->getSecurityContext()->getToken()->getUser();
     }
     
-    public function setAutomaticFlush( $boolean )
+    public function setAutomaticFlush($boolean)
     {
         $this->isFlushAutomatic = $boolean;
     }
@@ -236,7 +238,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->isFlushAutomatic;
     }
     
-    public function setIsSubService( $boolean )
+    public function setIsSubService($boolean)
     {
         $this->isSubService = $boolean;
     }
@@ -251,39 +253,31 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->getIsSubService();
     }
     
-    public function isValidService( $service )
+    public function isValidService($service)
     {
-        return is_a( $service, 'ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationServiceInterface' );
+        return ( $service instanceof ApplicationServiceInterface );
     }
     
-    public function addService( ApplicationServiceInterface $service )
+    public function addService(ApplicationServiceInterface $service)
     {
-        if ( $service->getID() === $this->getID() )
-        {
-            throw new \LogicException( sprintf( 'El servicio "%s" posee el mismo ID que el servicio al cual se lo quiere agregar.', $service->getID() ) );
-        }
-        else if ( $this->hasService( $service->getID() ) )
-        {
-            throw new \LogicException( sprintf( 'El servicio con ID "%s" ya ha sido agregado previamente a este servicio.', $service->getID() ) );
-        }
-        else
-        {
+        if ($service->getID() === $this->getID()) {
+            throw new \LogicException(sprintf('El servicio "%s" posee el mismo ID que el servicio al cual se lo quiere agregar.', $service->getID()));
+        } elseif ($this->hasService($service->getID())) {
+            throw new \LogicException(sprintf('El servicio con ID "%s" ya ha sido agregado previamente a este servicio.', $service->getID()));
+        } else {
             $newService = clone $service;
-            $newService->setIsSubService( true );
+            $newService->setIsSubService(true);
             
-            $this->services[ $service->getID() ] = $newService;
+            $this->services[$service->getID()] = $newService;
         }
     }
     
-    public function getService( $serviceID )
+    public function getService($serviceID)
     {
-        if ( $this->hasService( $serviceID ) )
-        {
-            return $this->services[ $serviceID ];
-        }
-        else
-        {
-            throw new \LogicException( sprintf( 'No se le ha agregado ningun servicio con ID "%s" a este servicio.', $serviceID ) );
+        if ( $this->hasService($serviceID)) {
+            return $this->services[$serviceID];
+        } else {
+            throw new \LogicException(sprintf('No se le ha agregado ningun servicio con ID "%s" a este servicio.', $serviceID));
         }
     }
     
@@ -292,12 +286,10 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->services;
     }
     
-    public function hasService( $serviceID )
+    public function hasService($serviceID)
     {
-        foreach ( $this->services as $s )
-        {
-            if ( $s->getID() == $serviceID )
-            {
+        foreach ($this->services as $s) {
+            if ($s->getID() == $serviceID) {
                 return true;
             }
         }
@@ -305,72 +297,22 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return false;
     }
     
-    public function setServices( array $services )  
+    public function setServices(array $services)  
     {
-        foreach ( $services as $service )
-        {
-            if ( !$this->isValidService( $service ) )
-            {
-                $received = is_object( $service ) ? get_class( $service ) : $service;
+        foreach ($services as $service) {
+            if (!$this->isValidService($service)) {
+                $received = is_object($service) ? get_class($service) : $service;
                 
-                throw new \InvalidArgumentException( sprintf( 'Uno de los servicios ingresados es invalido. Debe ser una instancia de "%s". Se recibio: "%s".', 'ApplicationServiceInterface', $received ) );
+                throw new \InvalidArgumentException(sprintf('Uno de los servicios ingresados es invalido. Debe ser una instancia de "%s". Se recibio: "%s".', 'ApplicationServiceInterface', $received));
             }
             
-            $this->addService( $service );
+            $this->addService($service);
         }
     }
-    
-    /**
-     * [TODO] Improve this method to handle object graphs
-     * 
-     * @param mixed The object
-     * @param ConstraintViolationList The error list
-     *
-     * @return array An array with fieldnames as keys and errors as values
-     */
-    public function formatErrorsFromList( $object, ConstraintViolationList $errorList, $formatForFieldName = null )
+
+    public function formatErrorsFromList($object, ConstraintViolationList $errorList, $formatForFieldName = null)
     {
-        $result = array();
-            
-        foreach ( $errorList as $error )
-        {
-            $messageParameters  = $error->getMessageParameters();
-            
-            if ( isset( $messageParameters[ 'errorType' ] ) && $messageParameters[ 'errorType' ] === 'Unique' )
-            {
-                $properties = array();
-                
-                if ( strpos( $messageParameters[ 'properties' ], '|' ) !== false )
-                {
-                    $properties = explode( '|', $messageParameters[ 'properties' ] );
-                }
-                else
-                {
-                    $properties[] = $messageParameters[ 'properties' ];
-                }
-                
-                foreach ( $properties as $property )
-                {
-                    $fieldName              = str_replace( get_class( $object ).'.', '', $error->getPropertyPath() );
-                    $fieldName              = $fieldName === '' ? $property : $fieldName;
-                    $fieldName              = is_null( $formatForFieldName ) ? $fieldName : $formatForFieldName.'['.str_replace( '.', '][', $fieldName ).']';
-                    
-                    $result[ $fieldName ]   = $error->getMessage();
-                }
-            }
-            else
-            {
-                $fieldName              = str_replace( get_class( $object ).'.', '', $error->getPropertyPath() );
-                
-                // Necesario para que los "getters" validation methods mapeen correctamente los campos con error
-                $fieldName              = strpos( $fieldName, 'FieldValid' ) !== false ? str_replace( 'FieldValid', '', $fieldName ) : $fieldName;
-                $fieldName              = is_null( $formatForFieldName ) ? $fieldName : $formatForFieldName.'['.str_replace( '.', '][', $fieldName ).']';
-                
-                $result[ $fieldName ]   = $error->getMessage();
-            }
-        }
-        
-        return $result;
+        return $this->getValidationErrorsFormatter()->format($object, $errorList, $formatForFieldName);
     }
     
     /**
@@ -380,14 +322,13 @@ abstract class ApplicationService implements ApplicationServiceInterface
      *
      * @return mixed The object
      */
-    public function validateObject( $object )
+    public function validateObject($object)
     {
         $validator  = $this->getValidator();
-        $result     = $validator->validate( $object );
+        $result     = $validator->validate($object);
         
-        if ( $result->count() > 0 )
-        {
-            throw new Exception\ApplicationInvalidDataException( $result, $object );
+        if ($result->count() > 0) {
+            throw new Exception\ApplicationInvalidDataException($result, $object);
         }
         
         return $object;
@@ -402,10 +343,15 @@ abstract class ApplicationService implements ApplicationServiceInterface
      *
      * @return mixed The object with data binded and validated
      */
-    public function bindDataToObjectAndValidate( array $data, $object )
+    public function bindDataToObjectAndValidate(array $data, $object)
     {
-        $object = $this->bindDataToObject( $data, $object );
-        $object = $this->validateObject( $object );
+        $this->notifyPreDataBindingEvent($data, $object);
+
+        $object = $this->bindDataToObject($data, $object);
+
+        $this->notifyPostDataBindingEvent($data, $object);
+
+        $object = $this->validateObject($object);
         
         return $object;
     }
@@ -475,8 +421,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         }
         
         // Notificamos el evento
-        $event = new Event( $this, 'application_service.exception', array( 'exception' => $e ) );
-        $this->getDispatcher()->notify( $event );
+        $this->notifyExceptionEvent( $e );
         
         if ( $this->isSubService() )
         {
@@ -1583,58 +1528,82 @@ abstract class ApplicationService implements ApplicationServiceInterface
     }
     
     // Global event notifiers
-    public function notifyPreFindEvent()
+    public function notifyPreFindEvent(array $data)
     {
-        $event = new Event( $this, self::EVENT_PRE_FIND );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PreFindEvent($this, $data);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_FIND, $event);
     }
     
-    public function notifyPostFindEvent()
+    public function notifyPostFindEvent(array $data, array $results)
     {
-        $event = new Event( $this, self::EVENT_POST_FIND );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PostFindEvent($this, $data, $results);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_FIND, $event);
     }
     
-    public function notifyPreCreateEvent( array $data, $entity )
+    public function notifyPreCreateEvent(array $data, $entity)
     {
-        $event = new Event( $this, self::EVENT_PRE_CREATE, array( 'data' => $data, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PreCreateEvent($this, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_CREATE, $event);
     }
     
-    public function notifyPostCreateEvent( array $data, $entity )
+    public function notifyPostCreateEvent(array $data, $entity)
     {
-        $event = new Event( $this, self::EVENT_POST_CREATE, array( 'data' => $data, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PostCreateEvent($this, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_CREATE, $event);
     }
     
-    public function notifyPreUpdateEvent( array $data, $entity )
+    public function notifyPreUpdateEvent(array $data, $entity)
     {
-        $event = new Event( $this, self::EVENT_PRE_UPDATE, array( 'data' => $data, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PreUpdateEvent($this, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_UPDATE, $event);
     }
     
-    public function notifyPostUpdateEvent( array $data, $entity )
+    public function notifyPostUpdateEvent(array $data, $entity)
     {
-        $event = new Event( $this, self::EVENT_POST_UPDATE, array( 'data' => $data, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PostUpdateEvent($this, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_UPDATE, $event);
     }
     
-    public function notifyPreDeleteEvent( $id, $entity )
+    public function notifyPreDeleteEvent($id, $entity)
     {
-        $event = new Event( $this, self::EVENT_PRE_DELETE, array( 'id' => $id, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PreDeleteEvent($this, $id, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_DELETE, $event);
     }
     
     public function notifyPostDeleteEvent( $id, $entity )
     {
-        $event = new Event( $this, self::EVENT_POST_DELETE, array( 'id' => $id, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PostDeleteEvent($this, $id, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_DELETE, $event);
     }
     
-    public function notifyPreCommitEvent( $action, $data, $entity )
+    public function notifyPreCommitEvent($action, array $data, $entity)
     {
-        $event = new Event( $this, self::EVENT_PRE_COMMIT, array( 'action' => $action, 'data' => $data, 'entity' => $entity ) );
-        $this->getDispatcher()->notify( $event );
+        $event = new Event\PreCommitEvent($this, $action, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_COMMIT, $event);
+    }
+
+    public function notifyPostCommitEvent($action, array $data, $entity)
+    {
+        $event = new Event\PostCommitEvent($this, $action, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_COMMIT, $event);
+    }
+
+    public function notifyPreDataBindingEvent(array $data, $entity)
+    {
+        $event = new Event\PreDataBindingEvent($this, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_DATA_BINDING, $event);
+    }
+
+    public function notifyPostDataBindingEvent(array $data, $entity)
+    {
+        $event = new Event\PostDataBindingEvent($this, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_DATA_BINDING, $event);
+    }
+
+    public function notifyExceptionEvent(\Exception $e)
+    {
+        $event = new Event\ExceptionEvent($this, $e);
+        $this->getDispatcher()->dispatch(Event\Event::ON_EXCEPTION, $event);
     }
     
     public function createQueryBuilderForPersistenceManager()

@@ -2,6 +2,6 @@
 
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest;
 
-class ApplicationServiceRequestExtJS extends ApplicationServiceRequestBase
+class ApplicationServiceRequestBase extends ApplicationServiceRequest
 {
 }
