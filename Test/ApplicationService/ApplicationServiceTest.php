@@ -264,5 +264,33 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
         $service->handleException($e);
     }
 
+    public function test_handleException_ApplicationInvalidDataExceptionHandling()
+    {
+        $service = TestApplicationServiceFactory::create();
+        $entityClass = self::TEST_ENTITY;
+        $entity = new $entityClass;
+        $constraintViolationList = TestApplicationServiceFactory::getConstraintViolationListMock();
+        $validationErrorsFormatterMock = $service->getValidationErrorsFormatter();
+        $formattedErrors = array(
+            'field'     => 'error',
+            'field2'    => 'error2'
+        );
+        $validationErrorsFormatterMock->expects($this->once())
+            ->method('format')
+            ->with($this->equalTo($entity), $this->equalTo($constraintViolationList), $this->equalTo(null))
+            ->will($this->returnValue($formattedErrors));
 
+        $e = new Exception\ApplicationInvalidDataException($constraintViolationList, $entity, 'Form Errors');
+
+        $service->handleException($e);
+
+        $response = $service->getServiceResponse();
+
+        $this->assertFalse($response->isSuccess());
+        $this->assertEquals($response->getErrorType(), 'ApplicationInvalidDataException');
+        $this->assertEquals($response->getErrorMessage(), $e->getMessage());
+        $this->assertEquals($response->getFieldsErrors(), $formattedErrors);
+    }
+
+    
 }

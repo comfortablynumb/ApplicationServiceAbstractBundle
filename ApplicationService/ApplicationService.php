@@ -385,11 +385,11 @@ abstract class ApplicationService implements ApplicationServiceInterface
     {
         $response = $this->getServiceResponse();
         
-        $response->setIsSuccess( false );
+        $response->setIsSuccess(false);
         
         if ($e instanceof Exception\ApplicationServiceExceptionInterface)
         {
-            $response->setErrorType( $e->getType());
+            $response->setErrorType($e->getType());
             
             switch ($e->getType())
             {
@@ -405,7 +405,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
                     $request = $this->getServiceRequest();
                     $formatFieldName = !is_null($request->getDataFromIndex($this->getRequestDataIndexForEntity())) ? $this->getRequestDataIndexForEntity() : null;
                     
-                    $response->setErrorMessage('Se produjo un error al intentar procesar su solicitud debido a que algunos de los valores recibidos son invalidos.');
+                    $response->setErrorMessage($e->getMessage());
                     $response->setFieldsErrors($this->formatErrorsFromList( $e->getEntity(), $e->getErrorList(), $formatFieldName));
                     
                     break;
@@ -432,82 +432,73 @@ abstract class ApplicationService implements ApplicationServiceInterface
     }
     
     // Finder Methods
-    public function findFromRequest( $qb = null )
+    public function findFromRequest($qb = null)
     {
-        $request    = $this->getServiceRequest();
-        $qb         = $this->getBaseQueryBuilderForFindAction( $qb );
+        $request = $this->getServiceRequest();
+        $qb = $this->getBaseQueryBuilderForFindAction($qb);
         
-        return $this->findBy( $request->getFilters(), $request->getResultsStart(), $request->getResultsLimit(), $request->getSortBy(), $request->getSortType(), $qb );
+        return $this->findBy($request->getFilters(), $request->getResultsStart(), $request->getResultsLimit(), $request->getSortBy(), $request->getSortType(), $qb);
     }
     
-    public function findOneFromRequest( $qb = null )
+    public function findOneFromRequest($qb = null)
     {
-        $request    = $this->getServiceRequest();
-        $qb         = $this->getBaseQueryBuilderForFindOneAction();
+        $request = $this->getServiceRequest();
+        $qb = $this->getBaseQueryBuilderForFindOneAction($qb);
         
-        return $this->findOneBy( $request->getFilters(), $qb );
+        return $this->findOneBy($request->getFilters(), $qb);
     }
     
-    public function findOneByPrimaryKey( $id, $lockMode = null , $lockVersion = null, $qb = null )
+    public function findOneByPrimaryKey($id, $lockMode = null , $lockVersion = null, $qb = null)
     {
-        $response       = $this->getServiceResponse();
+        $response = $this->getServiceResponse();
         
-        try
-        {
+        try {
             // Notificamos el evento pre_find
             $this->notifyPreFindEvent();
         
-            $lockMode   = $this->getEquivalentConcurrencyLockTypeOfPersistenceManager( $lockMode );
-            $result     = $this->doFindByPrimaryKey( $id, $lockMode, $lockVersion );
+            $lockMode = $this->getEquivalentConcurrencyLockTypeOfPersistenceManager($lockMode);
+            $result = $this->doFindByPrimaryKey($id, $lockMode, $lockVersion);
         
-            $response->setIsSuccess( true );
-            $response->setSuccessMessage( 'La operacion se ejecuto correctamente.' );
-            $response->setRow( $result );
+            $response->setIsSuccess(true);
+            $response->setSuccessMessage('La operacion se ejecuto correctamente.');
+            $response->setRow($result);
             
             // Notificamos el evento post_find
             $this->notifyPostFindEvent();
-        }
-        catch ( \Exception $e )
-        {
-            $this->handleException( $e );
+        } catch (\Exception $e) {
+            $this->handleException($e);
         }
         
         return $response;
     }
     
-    public function findOneBy( array $filters = array(), $qb = null )
+    public function findOneBy(array $filters = array(), $qb = null)
     {
         $response = $this->getServiceResponse();
         
-        try
-        {
+        try {
             // Notificamos el evento pre_find
             $this->notifyPreFindEvent();
             
-            $request        = $this->getServiceRequest();
-            $filters        = !empty( $filters ) ? $filters : $request->getFilters();
-            $result         = $this->doFind( $filters, null, null, null, null, false, $qb );
+            $request = $this->getServiceRequest();
+            $filters = !empty( $filters ) ? $filters : $request->getFilters();
+            $result = $this->doFind($filters, null, null, null, null, false, $qb);
             
-            if ( empty( $result ) )
-            {
+            if (empty($result)) {
                 throw new Exception\DatabaseNoResultException();
-            }
-            else
-            {
-                $result = $result[ 0 ];
-                $result = $this->formatFieldIndexesForResponse( $this->getRequestDataIndexForEntity(), $result );
+            } else {
+                $result = $result[0];
+                $result = $this->formatFieldIndexesForResponse($this->getRequestDataIndexForEntity(), $result);
             }
             
-            $response->setIsSuccess( true );
-            $response->setSuccessMessage( 'La operacion se ejecuto correctamente.' );
-            $response->setRow( $result );
+            $response->setIsSuccess(true);
+            $response->setSuccessMessage('La operacion se ejecuto correctamente.');
+            $response->setRow($result);
             
             // Notificamos el evento post_find
             $this->notifyPostFindEvent();
-        }
-        catch ( \Exception $e )
-        {
-            $this->handleException( $e );
+        } catch (\Exception $e) {
+            $this->handleException($e);
         }
         
         return $response;
