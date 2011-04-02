@@ -10,10 +10,13 @@
         <parameter key="application_service_abstract.event_dispatcher.class">Symfony\Component\EventDispatcher\EventDispatcher</parameter>
         <parameter key="application_service_abstract.acl_manager.class">ENC\Bundle\ApplicationServiceAbstractBundle\AclManager\AclManager</parameter>
         <parameter key="application_service_abstract.validation_errors_formatter.class">ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatter</parameter>
+        <parameter key="application_service_abstract.persistence_manager.class">ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceManager</parameter>
     </parameters>
 
     <services>
-        <service id="application_service_abstract.request" class="%application_service_abstract.request.class%" />
+        <service id="application_service_abstract.request" class="%application_service_abstract.request.class%">
+            <argument type="service" id="request" />
+        </service>
 
         <service id="application_service_abstract.response" class="%application_service_abstract.response.class%" />
 
@@ -23,6 +26,10 @@
         
         <service id="application_service_abstract.acl_manager" class="%application_service_abstract.acl_manager.class%">
             <argument type="service" id="security.acl.provider" />
+        </service>
+
+        <service id="application_service_abstract.persistence_manager" class="%application_service_abstract.persistence_manager.class%">
+            <argument type="service" id="doctrine.orm.default_entity_manager" />
         </service>
     </services>
 </container>
