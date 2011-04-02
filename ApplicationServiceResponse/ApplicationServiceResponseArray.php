@@ -55,7 +55,7 @@ class ApplicationServiceResponseArray extends ApplicationServiceResponse
     
     public function getRow()
     {
-        return isset( $this->data[ 'row' ] ) ? $this->data[ 'row' ] : array();
+        return isset( $this->data[ 'data' ] ) ? $this->data[ 'data' ] : array();
     }
     
     public function getRowObject()
@@ -105,16 +105,22 @@ class ApplicationServiceResponseArray extends ApplicationServiceResponse
     
     public function setData( array $data )
     {
-        $keys = array_keys( $data );
+        $requiredIndexes    = array( 'success', 'msg' );
         
-        if ( !in_array( 'success', $keys ) )
+        if ( empty( $data ) )
         {
-            $data[ 'success' ] = '';
+            $data[ 'success' ]  = '';
+            $data[ 'msg' ]      = '';
         }
-        
-        if ( !in_array( 'msg', $keys ) )
+        else
         {
-            $data[ 'msg' ] = '';
+            foreach ( $requiredIndexes as $index )
+            {
+                if ( !isset( $data[ $index ] ) )
+                {
+                    throw new \InvalidArgumentException( sprintf( 'El array de data debe contener el indice "%s".', $index ) );
+                }
+            }
         }
         
         $this->data = $data;
@@ -174,7 +180,7 @@ class ApplicationServiceResponseArray extends ApplicationServiceResponse
     
     public function setRow( array $row )
     {
-        $this->data[ 'row' ] = $row;
+        $this->data[ 'data' ] = $row;
     }
     
     public function setRowObject( $rowObject )

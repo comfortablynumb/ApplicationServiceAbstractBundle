@@ -453,8 +453,10 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $response = $this->getServiceResponse();
         
         try {
+            $data = array('id' => $id);
+            
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent();
+            $this->notifyPreFindEvent($data);
         
             $lockMode = $this->getEquivalentConcurrencyLockTypeOfPersistenceManager($lockMode);
             $result = $this->doFindByPrimaryKey($id, $lockMode, $lockVersion);
@@ -464,7 +466,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $response->setRow($result);
             
             // Notificamos el evento post_find
-            $this->notifyPostFindEvent();
+            $this->notifyPostFindEvent($data, $result);
         } catch (\Exception $e) {
             $this->handleException($e);
         }
@@ -478,7 +480,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         
         try {
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent();
+            $this->notifyPreFindEvent($filters);
             
             $request = $this->getServiceRequest();
             $filters = !empty( $filters ) ? $filters : $request->getFilters();
@@ -496,7 +498,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $response->setRow($result);
             
             // Notificamos el evento post_find
-            $this->notifyPostFindEvent();
+            $this->notifyPostFindEvent($filters, $result);
         } catch (\Exception $e) {
             $this->handleException($e);
         }
@@ -516,7 +518,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         try
         {
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent();
+            $this->notifyPreFindEvent($filters);
             
             $repository     = $this->getRepository();
             $rows           = $this->doFind( $filters, $start, $limit, $orderBy, $orderType, false, $qb );
@@ -530,7 +532,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $response->setTotalCount( ( int ) $totalCount );
             
             // Notificamos el evento post_find
-            $this->notifyPostFindEvent();
+            $this->notifyPostFindEvent($filters, $rows);
         }
         catch ( \Exception $e )
         {

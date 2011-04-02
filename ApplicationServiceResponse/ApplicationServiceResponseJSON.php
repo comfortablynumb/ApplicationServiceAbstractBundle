@@ -2,7 +2,7 @@
 
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse;
 
-abstract class ApplicationServiceResponseJSON extends ApplicationServiceResponse
+class ApplicationServiceResponseJSON extends ApplicationServiceResponseArray
 {
     public function getResponse()
     {
