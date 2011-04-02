@@ -31,23 +31,18 @@ class TestApplicationServiceFactory extends WebTestCase
     public static function createMock($methods = array(), $constructorArguments = array(), $callConstructor = false, $className = 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestApplicationService')
     {
         $instance = new self();
-        $service = $instance->getMock($className, $methods, $constructorArguments, '', $callConstructor);
-        $pmMock = $instance->getMock('ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceManager', array(), array(), '', false);
-        $validator = self::getValidatorMock();
-        $dispatcher = self::getTestDispatcher();
-        $serviceRequest = new ApplicationServiceRequestExtJS(self::getTestRequest());
-        $serviceResponse = new ApplicationServiceResponseArray();
+        $container = self::getNewContainer();
+        $defaultConstructorArguments = array(
+            $container
+        );
+        $constructorArguments = array_merge($defaultConstructorArguments, $constructorArguments);
 
-        $service->setPersistenceManager($pmMock);
-        $service->setValidator($validator);
-        $service->setDispatcher($dispatcher);
-        $service->setServiceRequest($serviceRequest);
-        $service->setServiceResponse($serviceResponse);
+        $service = $instance->getMock($className, $methods, $constructorArguments, '', $callConstructor);
         
         return $service;
     }
     
-    public static function getTestRequest()
+    public static function getRequest()
     {
         return Request::create('uri', 'GET', array());
     }
@@ -107,6 +102,13 @@ class TestApplicationServiceFactory extends WebTestCase
         
         return $instance->getMock('ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestQuery', array(), array(), '', false);
     }
+
+    public static function getDispatcherMock()
+    {
+        $instance = new self();
+        
+        return $instance->getMock('Symfony\Component\EventDispatcher\EventDispatcher', array(), array(), '', false);
+    }
     
     public static function getDispatcher()
     {
@@ -118,6 +120,11 @@ class TestApplicationServiceFactory extends WebTestCase
         $instance = new self();
         
         return $instance->getMock('Symfony\Component\Validator\ConstraintViolationList', array(), array(), '', false);
+    }
+
+    public static function getResponse()
+    {
+        return new ApplicationServiceResponseArray(array('someField' => 'someValue'));
     }
     
     public static function getNewContainer(array $services = array())
@@ -140,7 +147,7 @@ class TestApplicationServiceFactory extends WebTestCase
             if (isset($services['request'])) {
                 $serviceRequest = $services['request'];
             } else {
-                $request = $instance->getTestRequest();
+                $request = $instance->getRequest();
                 $serviceRequest = new ApplicationServiceRequestExtJS($request);
             }
         

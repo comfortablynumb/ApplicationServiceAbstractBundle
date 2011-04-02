@@ -10,7 +10,6 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Component\Validator\Validator;
 use Symfony\Component\Validator\ConstraintViolationList;
-use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -18,6 +17,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\Applic
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceManagerInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Event;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatterInterface;
 
 abstract class ApplicationService implements ApplicationServiceInterface
@@ -324,8 +324,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
      */
     public function validateObject($object)
     {
-        $validator  = $this->getValidator();
-        $result     = $validator->validate($object);
+        $validator = $this->getValidator();
+        $result = $validator->validate($object);
         
         if ($result->count() > 0) {
             throw new Exception\ApplicationInvalidDataException($result, $object);
@@ -345,14 +345,20 @@ abstract class ApplicationService implements ApplicationServiceInterface
      */
     public function bindDataToObjectAndValidate(array $data, $object)
     {
+        // Data Binding
         $this->notifyPreDataBindingEvent($data, $object);
 
         $object = $this->bindDataToObject($data, $object);
 
         $this->notifyPostDataBindingEvent($data, $object);
 
+        // Data Validation
+        $this->notifyPreDataValidation($object);
+
         $object = $this->validateObject($object);
-        
+
+        $this->notifyPostDataValidation($object);
+
         return $object;
     }
     
@@ -366,8 +372,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
     /**
      * Method to handle exceptions in a generic fashion without having 
      * to include this logic in every service you create. If you want 
-     * to customize the array of errors, just override the 
-     * formatErrorsFromList method.
+     * to customize the array of errors, just implement
+     * ValidatorErrorsFormatterInterface
      *
      * @param \Exception The exception
      * @param mixed The object
@@ -375,57 +381,51 @@ abstract class ApplicationService implements ApplicationServiceInterface
      *
      * @return array The same array with the results, but with a msg, error type and list of errors added
      */
-    public function handleException( \Exception $e )
+    public function handleException(\Exception $e)
     {
         $response = $this->getServiceResponse();
         
         $response->setIsSuccess( false );
         
-        if ( is_a( $e, 'ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExceptionInterface' ) )
+        if ($e instanceof Exception\ApplicationServiceExceptionInterface)
         {
-            $response->setErrorType( $e->getType() );
+            $response->setErrorType( $e->getType());
             
-            switch ( $e->getType() )
+            switch ($e->getType())
             {
                 case 'SubServiceException':
-                    if ( $this->isSubService() )
-                    {
+                    if ($this->isSubService()) {
                         throw $e;
-                    }
-                    else
-                    {
-                        $this->setServiceResponse( $e->getSubServiceResponse() );
+                    } else {
+                        $this->setServiceResponse($e->getSubServiceResponse());
                     }
                     
                     break;
                 case 'ApplicationInvalidDataException':
-                    $request            = $this->getServiceRequest();
-                    $formatFieldName    = !is_null( $request->getDataFromIndex( $this->getRequestDataIndexForEntity() ) ) ? $this->getRequestDataIndexForEntity() : null;
+                    $request = $this->getServiceRequest();
+                    $formatFieldName = !is_null($request->getDataFromIndex($this->getRequestDataIndexForEntity())) ? $this->getRequestDataIndexForEntity() : null;
                     
-                    $response->setErrorMessage( 'Se produjo un error al intentar procesar su solicitud debido a que algunos de los valores recibidos son invalidos.' );
-                    $response->setFieldsErrors( $this->formatErrorsFromList( $e->getEntity(), $e->getErrorList(), $formatFieldName ) );
+                    $response->setErrorMessage('Se produjo un error al intentar procesar su solicitud debido a que algunos de los valores recibidos son invalidos.');
+                    $response->setFieldsErrors($this->formatErrorsFromList( $e->getEntity(), $e->getErrorList(), $formatFieldName));
                     
                     break;
                 default:
-                    $response->setErrorMessage( $e->getMessage() );
+                    $response->setErrorMessage($e->getMessage());
                     
                     break;
             }
-        }
-        else
-        {
-            $exception = new Exception\ApplicationUnknownException( $e->getMessage(), 0, $e );
+        } else {
+            $exception = new Exception\ApplicationUnknownException($e->getMessage(), 0, $e);
             
-            $response->setErrorType( $exception->getType() );
-            $response->setErrorMessage( $exception->getMessage() );
+            $response->setErrorType($exception->getType());
+            $response->setErrorMessage($exception->getMessage());
         }
         
         // Notificamos el evento
-        $this->notifyExceptionEvent( $e );
+        $this->notifyExceptionEvent($e);
         
-        if ( $this->isSubService() )
-        {
-            $e = new Exception\SubServiceException( '', 0, null, $this->getServiceResponse() );
+        if ($this->isSubService()) {
+            $e = new Exception\SubServiceException('', 0, null, $this->getServiceResponse());
             
             throw $e;
         }
@@ -1598,6 +1598,18 @@ abstract class ApplicationService implements ApplicationServiceInterface
     {
         $event = new Event\PostDataBindingEvent($this, $data, $entity);
         $this->getDispatcher()->dispatch(Event\Event::ON_POST_DATA_BINDING, $event);
+    }
+
+    public function notifyPreDataValidationEvent($entity)
+    {
+        $event = new Event\PreDataValidationEvent($this, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_DATA_VALIDATION, $event);
+    }
+
+    public function notifyPostDataValidationEvent($entity)
+    {
+        $event = new Event\PostDataValidationEvent($this, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_DATA_VALIDATION, $event);
     }
 
     public function notifyExceptionEvent(\Exception $e)
