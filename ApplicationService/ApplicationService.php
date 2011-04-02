@@ -353,11 +353,11 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->notifyPostDataBindingEvent($data, $object);
 
         // Data Validation
-        $this->notifyPreDataValidation($object);
+        $this->notifyPreDataValidationEvent($object);
 
         $object = $this->validateObject($object);
 
-        $this->notifyPostDataValidation($object);
+        $this->notifyPostDataValidationEvent($object);
 
         return $object;
     }

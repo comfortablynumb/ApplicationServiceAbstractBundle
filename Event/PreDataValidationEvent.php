@@ -8,11 +8,10 @@ class PreDataValidationEvent extends Event
 {
     protected $entity;
     
-    public function __construct(ApplicationServiceInterface $service, array $data, $entity)
+    public function __construct(ApplicationServiceInterface $service, $entity)
     {
         parent::__construct($service);
 
-        $this->data = $data;
         $this->entity = $entity;
     }
 

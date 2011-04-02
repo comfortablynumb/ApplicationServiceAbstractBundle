@@ -201,14 +201,14 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
             ->method('notifyPostDataBindingEvent')
             ->with($this->equalTo($data), $this->equalTo($object));
         $serviceMock->expects($this->once())
-            ->method('notifyPreDataValidation')
+            ->method('notifyPreDataValidationEvent')
             ->with($this->equalTo($object));
         $serviceMock->expects($this->once())
             ->method('validateObject')
             ->with($this->equalTo($object))
             ->will($this->returnValue($object));
         $serviceMock->expects($this->once())
-            ->method('notifyPostDataValidation')
+            ->method('notifyPostDataValidationEvent')
             ->with($this->equalTo($object));
 
         $serviceMock->bindDataToObjectAndValidate($data, $object);
