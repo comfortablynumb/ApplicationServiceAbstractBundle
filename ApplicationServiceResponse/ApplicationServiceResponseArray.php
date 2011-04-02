@@ -105,21 +105,13 @@ class ApplicationServiceResponseArray extends ApplicationServiceResponse
     
     public function setData( array $data )
     {
-        $requiredIndexes    = array( 'success', 'msg' );
+        $requiredIndexes = array( 'success', 'msg' );
         
-        if ( empty( $data ) )
+        foreach ( $requiredIndexes as $index )
         {
-            $data[ 'success' ]  = '';
-            $data[ 'msg' ]      = '';
-        }
-        else
-        {
-            foreach ( $requiredIndexes as $index )
+            if ( !isset( $data[ $index ] ) )
             {
-                if ( !isset( $data[ $index ] ) )
-                {
-                    throw new \InvalidArgumentException( sprintf( 'El array de data debe contener el indice "%s".', $index ) );
-                }
+                $data[ $index ] = '';
             }
         }
         
