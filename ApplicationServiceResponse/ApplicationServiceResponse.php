@@ -6,12 +6,12 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\Appli
 
 abstract class ApplicationServiceResponse implements ApplicationServiceResponseInterface
 {
-    protected $data         = array();
-    protected $rowObject    = null;
+    protected $data = array();
+    protected $rowObject = null;
     
-    public function __construct( array $data = array() )
+    public function __construct(array $data = array())
     {
-        $this->setData( $data );
+        $this->setData($data);
     }
     
     public function getData()
@@ -19,7 +19,7 @@ abstract class ApplicationServiceResponse implements ApplicationServiceResponseI
         return $this->data;
     }
     
-    public function setData( array $data )
+    public function setData(array $data)
     {
         $this->data = $data;
     }

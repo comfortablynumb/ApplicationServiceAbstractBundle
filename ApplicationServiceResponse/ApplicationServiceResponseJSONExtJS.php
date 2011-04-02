@@ -1,9 +1,0 @@
-<?php
-
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse;
-
-use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseJSON;
-
-class ApplicationServiceResponseJSONExtJS extends ApplicationServiceResponseJSON
-{
-}

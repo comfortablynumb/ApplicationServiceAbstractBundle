@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use ENC\Bundle\ApplicationServiceAbstractBundle\AclManager\AclManager;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationService;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Test\PersistenceManager\TestPersistenceManager;
-use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestExtJS;
+use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestBase;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseArray;
 
 class TestApplicationServiceFactory extends WebTestCase
@@ -148,7 +148,7 @@ class TestApplicationServiceFactory extends WebTestCase
                 $serviceRequest = $services['request'];
             } else {
                 $request = $instance->getRequest();
-                $serviceRequest = new ApplicationServiceRequestExtJS($request);
+                $serviceRequest = new ApplicationServiceRequestBase($request);
             }
         
             if (isset($services['response'])) {

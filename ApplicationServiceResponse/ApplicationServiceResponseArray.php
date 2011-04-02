@@ -4,58 +4,50 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse
 
 class ApplicationServiceResponseArray extends ApplicationServiceResponse
 {
-    public function __construct( array $data = array() )
-    {
-        $this->setData( $data );
-    }
-    
     public function getResponse()
     {
         return $this->data;
     }
     
-    public function addFieldError( $field, $error )
+    public function addFieldError($field, $error)
     {
-        $this->setIsSuccess( false );
+        $this->setIsSuccess(false);
         
-        $this->data[ 'errors' ][ $field ] = $error;
+        $this->data['errors'][$field] = $error;
     }
         
     public function getErrorMessage()
     {
-        return $this->isSuccess() === false ? $this->data[ 'msg' ] : '';
+        return $this->isSuccess() === false ? $this->data['msg'] : '';
     }
     
     public function getErrorType()
     {
-        return $this->isSuccess() === false && isset( $this->data[ 'error_type' ] ) ? $this->data[ 'error_type' ] : '';
+        return $this->isSuccess() === false && isset($this->data['error_type'] ) ? $this->data['error_type'] : '';
     }
     
-    public function getFieldError( $field )
+    public function getFieldError($field)
     {
-        if ( $this->hasFieldError( $field ) )
-        {
-            return $this->data[ 'errors' ][ $field ];
-        }
-        else
-        {
+        if ($this->hasFieldError($field)) {
+            return $this->data['errors'][$field];
+        } else {
             return false;
         }
     }
     
     public function getFieldsErrors()
     {
-        return $this->isSuccess() === false && isset( $this->data[ 'errors' ] ) ? $this->data[ 'errors' ] : array();
+        return $this->isSuccess() === false && isset($this->data['errors'] ) ? $this->data['errors'] : array();
     }
     
     public function getPartialCount()
     {
-        return isset( $this->data[ 'partialCount' ] ) ? $this->data[ 'partialCount' ] : '';
+        return isset($this->data['partialCount']) ? $this->data['partialCount'] : '';
     }
     
     public function getRow()
     {
-        return isset( $this->data[ 'data' ] ) ? $this->data[ 'data' ] : array();
+        return isset($this->data['data']) ? $this->data['data'] : array();
     }
     
     public function getRowObject()
@@ -65,140 +57,129 @@ class ApplicationServiceResponseArray extends ApplicationServiceResponse
     
     public function getRows()
     {
-        return isset( $this->data[ 'rows' ] ) ? $this->data[ 'rows' ] : array();
+        return isset($this->data['rows']) ? $this->data['rows'] : array();
     }
     
     public function getSuccessMessage()
     {
-        return $this->isSuccess() === true ? $this->data[ 'msg' ] : '';
+        return $this->isSuccess() === true ? $this->data['msg'] : '';
     }
     
     public function getTotalCount()
     {
-        return isset( $this->data[ 'totalCount' ] ) ? $this->data[ 'totalCount' ] : '';
+        return isset($this->data['totalCount']) ? $this->data['totalCount'] : '';
     }
     
-    public function hasFieldError( $field )
+    public function hasFieldError($field)
     {
-        if ( $this->isSuccess() === false && isset( $this->data[ 'errors' ][ $field ] ) )
-        {
+        if ($this->isSuccess() === false && isset($this->data['errors'][$field])) {
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
     
     public function isSuccess()
     {
-        return $this->data[ 'success' ];
+        return $this->data['success'];
     }
     
-    public function removeFieldError( $field )
+    public function removeFieldError($field)
     {
-        if ( $this->hasFieldError( $field ) )
-        {
-            unset( $this->data[ 'errors' ][ $field ] );
+        if ($this->hasFieldError($field)) {
+            unset( $this->data['errors'][$field]);
         }
     }
     
-    public function setData( array $data )
+    public function setData(array $data)
     {
-        $requiredIndexes = array( 'success', 'msg' );
+        $requiredIndexes = array('success', 'msg');
         
-        foreach ( $requiredIndexes as $index )
+        foreach ($requiredIndexes as $index)
         {
-            if ( !isset( $data[ $index ] ) )
-            {
-                $data[ $index ] = '';
+            if (!isset($data[$index])) {
+                $data[$index] = '';
             }
         }
         
         $this->data = $data;
     }
     
-    public function setErrorMessage( $errorMessage )
+    public function setErrorMessage($errorMessage)
     {
-        $this->setIsSuccess( false );
+        $this->setIsSuccess(false);
         
-        $this->data[ 'msg' ] = $errorMessage;
+        $this->data['msg'] = $errorMessage;
     }
     
-    public function setErrorType( $errorType )
+    public function setErrorType($errorType)
     {
-        $this->setIsSuccess( false );
+        $this->setIsSuccess(false);
         
-        $this->data[ 'error_type' ] = $errorType;
+        $this->data['error_type'] = $errorType;
     }
     
-    public function setFieldsErrors( array $errors )
+    public function setFieldsErrors(array $errors)
     {
-        $this->setIsSuccess( false );
+        $this->setIsSuccess(false);
         
-        $this->data[ 'errors' ] = $errors;
+        $this->data['errors'] = $errors;
     }
     
-    public function setIsSuccess( $isSuccess )
+    public function setIsSuccess($isSuccess)
     {
-        if ( !is_bool( $isSuccess ) )
-        {
-            throw new \InvalidArgumentException( sprintf( 'El primer argumento debe ser un boolean. Se recibio: "%s".', $isSuccess ) );
+        if (!is_bool($isSuccess)) {
+            throw new \InvalidArgumentException(sprintf('First argument must be a boolean. It was received: "%s".', $isSuccess));
         }
         
-        if ( $isSuccess === true )
-        {
-            unset( $this->data[ 'error_type' ] );
-            unset( $this->data[ 'errors' ] );
-        }
-        else
-        {
-            $this->data[ 'error_type' ] = !isset( $this->data[ 'error_type' ] ) ? '' : $this->data[ 'error_type' ];
-            $this->data[ 'errors' ]     = !isset( $this->data[ 'errors' ] ) ? array() : $this->data[ 'errors' ];
+        if ($isSuccess === true) {
+            unset( $this->data['error_type']);
+            unset( $this->data['errors'] );
+        } else {
+            $this->data['error_type'] = !isset($this->data['error_type']) ? '' : $this->data['error_type'];
+            $this->data['errors'] = !isset($this->data['errors']) ? array() : $this->data['errors'];
         }
         
-        $this->data[ 'success' ] = $isSuccess;
+        $this->data['success'] = $isSuccess;
     }
     
-    public function setPartialCount( $partialCount )
+    public function setPartialCount($partialCount)
     {
-        if ( !is_int( $partialCount ) )
-        {
-            throw new \InvalidArgumentException( sprintf( 'El primer argumento debe ser un numero entero. Se recibio: "%s".', $partialCount ) );
+        if (!is_int($partialCount)) {
+            throw new \InvalidArgumentException(sprintf('"partialCount" argument must be an integer. It was received: "%s".', $partialCount));
         }
         
-        $this->data[ 'partialCount' ] = $partialCount;
+        $this->data['partialCount'] = $partialCount;
     }
     
-    public function setRow( array $row )
+    public function setRow(array $row)
     {
-        $this->data[ 'data' ] = $row;
+        $this->data['data'] = $row;
     }
     
-    public function setRowObject( $rowObject )
+    public function setRowObject($rowObject)
     {
         $this->rowObject = $rowObject;
     }
     
-    public function setRows( array $rows )
+    public function setRows(array $rows)
     {
-        $this->data[ 'rows' ] = $rows;
+        $this->data['rows'] = $rows;
     }
     
-    public function setSuccessMessage( $successMessage )
+    public function setSuccessMessage($successMessage)
     {
-        $this->setIsSuccess( true );
+        $this->setIsSuccess(true);
         
-        $this->data[ 'msg' ] = $successMessage;
+        $this->data['msg'] = $successMessage;
     }
     
-    public function setTotalCount( $totalCount )
+    public function setTotalCount($totalCount)
     {
-        if ( !is_int( $totalCount ) )
-        {
-            throw new \InvalidArgumentException( sprintf( 'El primer argumento debe ser un numero entero. Se recibio: "%s".', $totalCount ) );
+        if (!is_int($totalCount)) {
+            throw new \InvalidArgumentException(sprintf('"totalCount" argument must be an integer. It was received: "%s".', $totalCount ) );
         }
         
-        $this->data[ 'totalCount' ] = $totalCount;
+        $this->data['totalCount'] = $totalCount;
     }
 }

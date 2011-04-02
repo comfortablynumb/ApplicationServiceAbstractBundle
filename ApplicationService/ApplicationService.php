@@ -506,37 +506,34 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $response;
     }
     
-    public function findAll( $start = null, $limit = null, $orderBy = null, $orderType = null, $qb = null )
+    public function findAll($start = null, $limit = null, $orderBy = null, $orderType = null, $qb = null)
     {
-        return $this->findBy( array(), $start, $limit, $orderBy, $orderType, $qb );
+        return $this->findBy(array(), $start, $limit, $orderBy, $orderType, $qb);
     }
     
-    public function findBy( array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $qb = null )
+    public function findBy(array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $qb = null)
     {
         $response = $this->getServiceResponse();
         
-        try
-        {
+        try {
             // Notificamos el evento pre_find
             $this->notifyPreFindEvent($filters);
             
-            $repository     = $this->getRepository();
-            $rows           = $this->doFind( $filters, $start, $limit, $orderBy, $orderType, false, $qb );
-            $partialCount   = count( $rows );
-            $totalCount     = $this->doFind( $filters, $start, $limit, $orderBy, $orderType, true, $qb );
+            $repository = $this->getRepository();
+            $rows = $this->doFind($filters, $start, $limit, $orderBy, $orderType, false, $qb);
+            $partialCount = count($rows);
+            $totalCount = $this->doFind($filters, $start, $limit, $orderBy, $orderType, true, $qb);
             
-            $response->setIsSuccess( true );
-            $response->setSuccessMessage( 'La operacion se ejecuto correctamente.' );
-            $response->setRows( $rows );
-            $response->setPartialCount( ( int ) $partialCount );
-            $response->setTotalCount( ( int ) $totalCount );
+            $response->setIsSuccess(true);
+            $response->setSuccessMessage('La operacion se ejecuto correctamente.');
+            $response->setRows($rows);
+            $response->setPartialCount((int) $partialCount);
+            $response->setTotalCount((int) $totalCount);
             
             // Notificamos el evento post_find
             $this->notifyPostFindEvent($filters, $rows);
-        }
-        catch ( \Exception $e )
-        {
-            $this->handleException( $e );
+        } catch (\Exception $e) {
+            $this->handleException($e);
         }
         
         return $response;

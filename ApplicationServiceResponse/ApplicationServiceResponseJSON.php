@@ -6,6 +6,6 @@ class ApplicationServiceResponseJSON extends ApplicationServiceResponseArray
 {
     public function getResponse()
     {
-        return json_encode( $this->data );
+        return json_encode($this->data);
     }
 }
