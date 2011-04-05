@@ -9,14 +9,19 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 
 class PersistenceManager extends PersistenceManagerAbstract
 {
-    public function setPersistenceManager( EntityManager $entityManager )
+    public function __construct(EntityManager $em)
+    {
+        $this->setPersistenceManager($em);
+    }
+    
+    public function setPersistenceManager(EntityManager $entityManager)
     {
         $this->pm = $entityManager;
     }
 
-    public function createQueryBuilder()
+    public function createQueryBuilder($document = null)
     {
-        return $this->pm->createQueryBuilder();
+        return $this->pm->createQueryBuilder($document);
     }
 
     public function lock($object, $lockMode, $lockVersion)

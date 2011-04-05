@@ -10,13 +10,13 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
  *
  * @author Gustavo Adrian <comfortablynumb@gmail.com
  */
-class PersistenceManagerAbstract implements PersistenceManagerInterface
+abstract class PersistenceManagerAbstract implements PersistenceManagerInterface
 {
     protected $pm = null;
     
-    public function __construct($persistenceManager)
+    public function getPersistenceManager()
     {
-        $this->setPersistenceManager($persistenceManager);
+        return $this->pm;
     }
 
     public function clear($objectName)
@@ -72,11 +72,6 @@ class PersistenceManagerAbstract implements PersistenceManagerInterface
     public function getPartialReference($entityName, $identifier)
     {
         return $this->pm->getPartialReference($entityName, $identifier);
-    }
-
-    public function getPersistenceManager()
-    {
-        return $this->pm;
     }
 
     public function getProxyFactory()

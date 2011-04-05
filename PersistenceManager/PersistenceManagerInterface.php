@@ -13,14 +13,14 @@ interface PersistenceManagerInterface
      * 
      * @param objectName
      */
-    function clear( $objectName );
+    function clear($objectName);
     function close();
 
     /**
      * 
      * @param object
      */
-    function contains( $object );
+    function contains($object);
 
     /**
      * 
@@ -28,13 +28,13 @@ interface PersistenceManagerInterface
      * @param configuration
      * @param eventManager
      */
-    function create( $connection, $configuration, $eventManager );
+    function create($connection, $configuration, $eventManager);
 
     /**
      * 
      * @param documentName
      */
-    function createQueryBuilder( $documentName = null );
+    function createQueryBuilder($documentName = null);
 
     /**
      * 
@@ -46,7 +46,7 @@ interface PersistenceManagerInterface
      * 
      * @param options
      */
-    function flush( array $options = array() );
+    function flush(array $options = array());
 
     /**
      * 
@@ -67,7 +67,7 @@ interface PersistenceManagerInterface
      * @param entityName
      * @param identifier
      */
-    function getPartialReference( $entityName, $identifier );
+    function getPartialReference($entityName, $identifier);
 
     function getPersistenceManager();
 
@@ -78,13 +78,13 @@ interface PersistenceManagerInterface
      * @param entityName
      * @param identifier
      */
-    function getReference( $entityName, $identifier );
+    function getReference($entityName, $identifier);
 
     /**
      * 
      * @param objectName
      */
-    function getRepository( $objectName );
+    function getRepository($objectName);
 
     function getUnitOfWork();
 
@@ -94,29 +94,29 @@ interface PersistenceManagerInterface
      * @param lockMode
      * @param lockVersion
      */
-    function lock( $object, $lockMode, $lockVersion );
+    function lock($object, $lockMode, $lockVersion);
 
     /**
      * 
      * @param object
      */
-    function merge( $object );
+    function merge($object);
 
     /**
      * 
      * @param object
      */
-    function persist( $object );
+    function persist($object);
 
     /**
      * 
      * @param object
      */
-    function refresh( $object );
+    function refresh($object);
 
     /**
      * 
      * @param object
      */
-    function remove( $object );
+    function remove($object);
 }
