@@ -5,6 +5,7 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\AclManager;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
 use Symfony\Component\Security\Acl\Permission\MaskBuilder;
+use Symfony\Component\Security\Acl\Voter\FieldVote;
 
 class AclManager
 {
@@ -30,9 +31,14 @@ class AclManager
         return ObjectIdentity::fromDomainObject( $entity );
     }
     
-    public function createObjectIdentityForClass( $class )
+    public function createObjectIdentityForClass($class)
     {
-        return new ObjectIdentity( -1, $class );
+        return new ObjectIdentity(-1, $class);
+    }
+
+    public function createFieldVoteForObject($object, $field)
+    {
+        return new FieldVote($object, $field);
     }
     
     public function createUserSecurityIdentity( $user )

@@ -46,6 +46,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     const PERMISSIONS_EDIT                      = 'EDIT';
     const PERMISSIONS_DELETE                    = 'DELETE';
     const PERMISSIONS_VIEW                      = 'VIEW';
+    const PERMISSIONS_MASTER                    = 'MASTER';
     
     protected $id                           = null;
     protected $request                      = null;
@@ -64,6 +65,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $finderOperators              = array();
     protected $permissions                  = array();
     protected $validationErrorsFormatter    = null;
+    protected $validEntityPropertiesForAcl  = null;
     
     public function __construct(ContainerInterface $container)
     {
@@ -97,7 +99,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             self::FILTER_INSTANCE_OF                => 'INSTANCE OF'
         );
     }
-    
+     
     public function getFinderOperators()
     {
         return $this->finderOperators;
@@ -109,7 +111,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
             self::PERMISSIONS_CREATE,
             self::PERMISSIONS_EDIT,
             self::PERMISSIONS_DELETE,
-            self::PERMISSIONS_VIEW
+            self::PERMISSIONS_VIEW,
+            self::PERMISSIONS_MASTER
         );
     }
     
@@ -490,15 +493,21 @@ abstract class ApplicationService implements ApplicationServiceInterface
                 throw new Exception\DatabaseNoResultException();
             } else {
                 $result = $result[0];
-                $result = $this->formatFieldIndexesForResponse($this->getRequestDataIndexForEntity(), $result);
             }
+
+            // Notificamos el evento post_find ANTES de que se formateen los campos
+            $this->notifyPostFindEvent($filters, $result);
             
+            // El evento pudo haber cambiado el resultado, asi que lo obtenemos de nuevo
+            $tmp = $response->getRow();
+            $result = empty($tmp) ? $result : $tmp;
+            $result = $this->formatFieldIndexesForResponse($this->getRequestDataIndexForEntity(), $result);
+
             $response->setIsSuccess(true);
             $response->setSuccessMessage('La operacion se ejecuto correctamente.');
             $response->setRow($result);
             
-            // Notificamos el evento post_find
-            $this->notifyPostFindEvent($filters, $result);
+            
         } catch (\Exception $e) {
             $this->handleException($e);
         }
@@ -1643,11 +1652,34 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function getValidEntityPropertiesForAcl()
     {
-        $entityClass        = $this->getFullEntityClass();
-        $reflectionClass    = new \ReflectionClass( $entityClass );
-        $properties         = $reflectionClass->getProperties( \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED );
-        
-        return $properties;
+        if ( $this->validEntityPropertiesForAcl === null )
+        {
+            $entityClass = $this->getFullEntityClass();
+            $reflectionClass = new \ReflectionClass($entityClass);
+            $properties = $reflectionClass->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
+            $count = count($properties);
+            $returnProperties = array();
+
+            for ($i = 0 ; $i < $count ; ++$i ) {
+                $returnProperties[] = $properties[$i]->getName();
+            }
+
+            $this->validEntityPropertiesForAcl = $returnProperties;
+        }
+
+        return $this->validEntityPropertiesForAcl;
+    }
+
+    public function getAliasesForEntityProperties()
+    {
+        $properties = $this->getValidEntityPropertiesForAcl();
+        $aliases = array();
+
+        foreach ($properties as $property) {
+            $aliases[$property] = $property;
+        }
+
+        return $aliases;
     }
     
     public function getServiceFromEntityName( $moduleName, $entityName )
