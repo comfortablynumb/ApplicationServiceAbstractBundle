@@ -1661,7 +1661,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $returnProperties = array();
 
             for ($i = 0 ; $i < $count ; ++$i ) {
-                $returnProperties[] = $properties[$i]->getName();
+                if ($properties[$i]->getName() !== 'id') {
+                    $returnProperties[] = $properties[$i]->getName();
+                }
             }
 
             $this->validEntityPropertiesForAcl = $returnProperties;
@@ -1676,7 +1678,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $aliases = array();
 
         foreach ($properties as $property) {
-            $aliases[$property] = $property;
+            $aliases[$this->getFullEntityClass().'.'.$property] = array($property);
         }
 
         return $aliases;
@@ -1690,8 +1692,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
         
         if ( $moduleManager->hasModule( $moduleName ) )
         {
-            $module         = $moduleManager->getModule( $entityName );
-            $serviceName    = $entityName.'_service';
+            $module = $moduleManager->getModule( $moduleName );
+            $entityUnderscored = strtolower(preg_replace('/(?<=[a-z])([A-Z])/', '_$1', $entityName));
+            $serviceName = $entityUnderscored.'_service';
             
             if ( $module->hasService( $serviceName ) )
             {

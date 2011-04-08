@@ -6,6 +6,7 @@
 
     <parameters>
         <parameter key="application_service_abstract.request.class">ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestBase</parameter>
+        <parameter key="fake_request.class">Symfony\Component\HttpFoundation\Request</parameter>
         <parameter key="application_service_abstract.response.class">ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseJSON</parameter>
         <parameter key="application_service_abstract.event_dispatcher.class">Symfony\Component\EventDispatcher\EventDispatcher</parameter>
         <parameter key="application_service_abstract.acl_manager.class">ENC\Bundle\ApplicationServiceAbstractBundle\AclManager\AclManager</parameter>
@@ -14,9 +15,11 @@
     </parameters>
 
     <services>
-        <service id="application_service_abstract.request" class="%application_service_abstract.request.class%">
+        <service id="application_service_abstract.request" class="%application_service_abstract.request.class%" scope="request">
             <argument type="service" id="request" />
         </service>
+
+        <service id="fake_request" class="%fake_request.class%" />
 
         <service id="application_service_abstract.response" class="%application_service_abstract.response.class%" />
 

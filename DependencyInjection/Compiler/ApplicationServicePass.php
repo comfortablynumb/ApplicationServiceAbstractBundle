@@ -17,5 +17,14 @@ class ApplicationServicePass implements CompilerPassInterface
         foreach ($subscribersIDs as $subscriberID) {
             $eventDispatcherDefinition->addMethodCall('addSubscriber', array(new Reference($subscriberID)));
         }
+
+        // If we're in CLI we need to implement a fake version of the request object
+        // since there's no instance of Request available. This could cause an exception
+        // at the time of instance an ApplicationService
+        if (defined('STDIN')) {
+            $requestDefinition = $container->getDefinition('application_service_abstract.request');
+            $requestDefinition->setScope('container');
+            $requestDefinition->setArgument(0, new Reference('fake_request'));
+        }
     }
 }

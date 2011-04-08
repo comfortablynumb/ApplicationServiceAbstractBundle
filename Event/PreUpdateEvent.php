@@ -16,4 +16,24 @@ class PreUpdateEvent extends Event
         $this->data = $data;
         $this->entity = $entity;
     }
+
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    public function setData(array $data)
+    {
+        $this->data = $data;
+    }
+
+    public function getEntity()
+    {
+        return $this->entity;
+    }
+
+    public function setEntity($entity)
+    {
+        $this->entity = $entity;
+    }
 }
