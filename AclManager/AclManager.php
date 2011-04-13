@@ -65,36 +65,48 @@ class AclManager
     {
         return $this->getAclProvider()->updateAcl( $acl );
     }
+
+    public function deleteAcl( $acl )
+    {
+        return $this->getAclProvider()->deleteAcl( $acl );
+    }
     
     public function findAcl( ObjectIdentity $oid, array $sid )
     {
         return $this->getAclProvider()->findAcl( $oid, $sid );
     }
 
-    public function getACEForMaskAndUserIdentity( $ACEsList, $mask, SecurityIdentityInterface $userIdentity )
+    public function getACEFromList($granting, array $list, $sid, $field = null)
     {
-        foreach ( $ACEsList as $ace )
-        {
-            if ( $ace->getMask() === $mask->get() && $ace->getSecurityIdentity()->equals( $userIdentity ) )
-            {
-                return $ace;
+        foreach ($list as $ace) {
+            if ($ace->getSecurityIdentity()->equals($sid) && $ace->isGranting() === $granting) {
+                if (is_null($field) || $field === $ace->getField()) {
+
+                    return $ace;
+                }
             }
         }
 
         return false;
     }
 
-    public function getFieldACEForMaskAndUserIdentity( $ACEsList, $mask, SecurityIdentityInterface $userIdentity, $field )
+    public function getAllowACEFromList(array $list, $sid, $field = null)
     {
-        foreach ( $ACEsList as $ace )
-        {
-            if ( $ace->getField() === $field && $ace->getMask() === $mask->get() && $ace->getSecurityIdentity()->equals( $userIdentity ) )
-            {
-                return $ace;
-            }
-        }
+        return $this->getACEFromList(true, $list, $sid, $field);
+    }
 
-        return false;
+    public function getDenyACEFromList(array $list, $sid, $field = null)
+    {
+        return $this->getACEFromList(false, $list, $sid, $field);
+    }
+
+    public function hasACEPermission($ace, $permission)
+    {
+        if (!is_int($permission)) {
+            throw new \InvalidArgumentException('Argument "permission" must be an integer.');
+        }
+        
+        return ($ace->getMask() & $permission) !== 0;
     }
 
     public function insertClassACE( $acl, $securityIdentity, $mask, $index, $granting, $strategy = null )
@@ -125,14 +137,14 @@ class AclManager
         return $acl;
     }
 
-    public function updateClassACE( $acl, $ace, $mask )
+    public function updateClassACE( $acl, $ace, $mask, $sid )
     {
         $classACEs = $acl->getClassACEs();
         $countACEs = count( $classACEs );
 
         for ( $i = 0 ; $i < $countACEs ; ++$i )
         {
-            if ( $ace->getId() === $classACEs[ $i ]->getId() )
+            if ( $ace->getSecurityIdentity()->equals($sid) && $ace->getId() === $classACEs[ $i ]->getId() )
             {
                 $acl->updateClassACE( $i, $mask );
 
@@ -143,14 +155,14 @@ class AclManager
         return $acl;
     }
 
-    public function updateClassFieldACE( $acl, $ace, $field, $mask )
+    public function updateClassFieldACE( $acl, $ace, $field, $mask, $sid )
     {
         $classFieldACEs = $acl->getClassFieldACEs();
         $countACEs = count( $classFieldACEs );
 
         for ( $i = 0 ; $i < $countACEs ; ++$i )
         {
-            if ( $ace->getId() === $classFieldACEs[ $i ]->getId() )
+            if ( $ace->getSecurityIdentity()->equals($sid) && $ace->getId() === $classFieldACEs[ $i ]->getId() )
             {
                 $acl->updateClassFieldACE( $i, $field, $mask );
 
@@ -161,14 +173,14 @@ class AclManager
         return $acl;
     }
 
-    public function updateObjectACE( $acl, $ace, $mask )
+    public function updateObjectACE( $acl, $ace, $mask, $sid )
     {
         $objectACEs = $acl->getObjectACEs();
         $countACEs = count( $objectACEs );
 
         for ( $i = 0 ; $i < $countACEs ; ++$i )
         {
-            if ( $ace->getId() === $objectACEs[ $i ]->getId() )
+            if ( $ace->getSecurityIdentity()->equals($sid) && $ace->getId() === $objectACEs[ $i ]->getId() )
             {
                 $acl->updateObjectACE( $i, $mask );
 
@@ -179,14 +191,14 @@ class AclManager
         return $acl;
     }
 
-    public function updateObjectFieldACE( $acl, $ace, $field, $mask )
+    public function updateObjectFieldACE( $acl, $ace, $field, $mask, $sid )
     {
         $objectFieldACEs = $acl->getObjectFieldACEs($field);
         $countACEs = count( $objectFieldACEs );
 
         for ( $i = 0 ; $i < $countACEs ; ++$i )
         {
-            if ( $ace->getId() === $objectFieldACEs[ $i ]->getId() )
+            if ( $ace->getSecurityIdentity()->equals($sid) && $ace->getId() === $objectFieldACEs[ $i ]->getId() )
             {
                 $acl->updateObjectFieldACE( $i, $field, $mask );
 

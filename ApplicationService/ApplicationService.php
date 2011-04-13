@@ -72,7 +72,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->setContainer($container);
         $this->setServiceRequest($container->get('application_service_abstract.request'));
         $this->setServiceResponse($container->get('application_service_abstract.response'));
-        $this->setPersistenceManager($container->get('application_service_abstract.persistence_manager'));
+        $this->setPersistenceManager($container->get('application_service_abstract.persistence_manager.orm'));
         $this->setValidator($container->get('validator'));
         $this->setDispatcher($container->get('application_service_abstract.event_dispatcher'));
         $this->setSession($container->get('session'));
@@ -1220,19 +1220,21 @@ abstract class ApplicationService implements ApplicationServiceInterface
             
             $object = $this->bindDataToObjectAndValidate( $data, $object );
             
+            // Notificamos el evento "pre_commit"
+            //
             // Si el Persistence Manager ya contiene a la entidad, entonces es que estamos 
             // modificandola. En caso contrario, estamos creandola
+
             $action = $pm->contains( $object ) ? 'update' : 'create';
-            
+
+            $this->notifyPreCommitEvent( $action, $data, $object );
+
             $pm->persist( $object );
             
             if ( $this->isFlushAutomatic() )
             {
                 $pm->flush();
             }
-            
-            // Notificamos el evento "pre_commit"
-            $this->notifyPreCommitEvent( $action, $data, $object );
             
             $pm->commitTransaction();
         }
