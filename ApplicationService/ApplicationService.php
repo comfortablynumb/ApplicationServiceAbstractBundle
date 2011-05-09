@@ -459,7 +459,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $data = array('id' => $id);
             
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent($data);
+            $this->notifyPreFindEvent($data, $qb);
         
             $lockMode = $this->getEquivalentConcurrencyLockTypeOfPersistenceManager($lockMode);
             $result = $this->doFindByPrimaryKey($id, $lockMode, $lockVersion);
@@ -483,7 +483,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         
         try {
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent($filters);
+            $this->notifyPreFindEvent($filters, $qb);
             
             $request = $this->getServiceRequest();
             $filters = !empty( $filters ) ? $filters : $request->getFilters();
@@ -526,7 +526,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         
         try {
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent($filters);
+            $this->notifyPreFindEvent($filters, $qb);
             
             $repository = $this->getRepository();
             $rows = $this->doFind($filters, $start, $limit, $orderBy, $orderType, false, $qb);
@@ -1227,21 +1227,28 @@ abstract class ApplicationService implements ApplicationServiceInterface
 
             $action = $pm->contains( $object ) ? 'update' : 'create';
 
-            $this->notifyPreCommitEvent( $action, $data, $object );
+            $this->notifyPrePersistEvent( $action, $data, $object );
 
             $pm->persist( $object );
+
+            $this->notifyPostPersistEvent( $action, $data, $object );
             
             if ( $this->isFlushAutomatic() )
             {
                 $pm->flush();
             }
+
+            $this->notifyPreCommitEvent( $action, $data, $object );
             
             $pm->commitTransaction();
         }
         catch ( \Exception $e )
         {
             $pm->rollbackTransaction();
-            $pm->close();
+
+            if (!$this->isSubService()) {
+                $pm->close();
+            }
             
             throw $e;
         }
@@ -1272,7 +1279,10 @@ abstract class ApplicationService implements ApplicationServiceInterface
         catch ( \Exception $e )
         {
             $pm->rollbackTransaction();
-            $pm->close();
+
+            if (!$this->isSubService()) {
+                $pm->close();
+            }
             
             throw $e;
         }
@@ -1529,9 +1539,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
     }
     
     // Global event notifiers
-    public function notifyPreFindEvent(array $data)
+    public function notifyPreFindEvent(array $data, $qb = null)
     {
-        $event = new Event\PreFindEvent($this, $data);
+        $event = new Event\PreFindEvent($this, $data, $qb);
         $this->getDispatcher()->dispatch(Event\Event::ON_PRE_FIND, $event);
     }
     
@@ -1576,7 +1586,19 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $event = new Event\PostDeleteEvent($this, $id, $entity);
         $this->getDispatcher()->dispatch(Event\Event::ON_POST_DELETE, $event);
     }
-    
+
+    public function notifyPrePersistEvent($action, array $data, $entity)
+    {
+        $event = new Event\PrePersistEvent($this, $action, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_PERSIST, $event);
+    }
+
+    public function notifyPostPersistEvent($action, array $data, $entity)
+    {
+        $event = new Event\PostPersistEvent($this, $action, $data, $entity);
+        $this->getDispatcher()->dispatch(Event\Event::ON_POST_PERSIST, $event);
+    }
+
     public function notifyPreCommitEvent($action, array $data, $entity)
     {
         $event = new Event\PreCommitEvent($this, $action, $data, $entity);

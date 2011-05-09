@@ -26,6 +26,11 @@ class AclManager
     {
         $this->aclProvider = $aclProvider;
     }
+
+    public function createObjectIdentityWithID($entity, $id)
+    {
+        return new ObjectIdentity($id, (is_object($entity) ? get_class($entity) : $entity));
+    }
     
     public function createObjectIdentity( $entity, $class = null )
     {
@@ -38,7 +43,7 @@ class AclManager
     
     public function createObjectIdentityForClass($class)
     {
-        return new ObjectIdentity(-1, $class);
+        return new ObjectIdentity(sha1($class), $class);
     }
 
     public function createFieldVoteForObject($object, $field)

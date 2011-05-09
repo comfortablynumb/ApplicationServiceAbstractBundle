@@ -17,6 +17,8 @@ class Event extends SymfonyEvent
     const ON_POST_UPDATE            = 'onPostUpdate';
     const ON_PRE_DELETE             = 'onPreDelete';
     const ON_POST_DELETE            = 'onPostDelete';
+    const ON_PRE_PERSIST            = 'onPrePersist';
+    const ON_POST_PERSIST           = 'onPostPersist';
     const ON_PRE_COMMIT             = 'onPreCommit';
     const ON_POST_COMMIT            = 'onPostCommit';
     const ON_PRE_DATA_BINDING       = 'onPreDataBinding';
