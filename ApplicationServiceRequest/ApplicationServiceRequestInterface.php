@@ -6,7 +6,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 interface ApplicationServiceRequestInterface
 {
-    public function __construct(Request $request);
     public function getDataFromIndex($index);
     public function getFiles();
     public function getFilters();

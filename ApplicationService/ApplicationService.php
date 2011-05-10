@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Validator;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseInterface;
@@ -70,7 +71,17 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function __construct(ContainerInterface $container)
     {
         $this->setContainer($container);
-        $this->setServiceRequest($container->get('application_service_abstract.request'));
+
+        $sapiType = php_sapi_name();
+        $request = $container->get('application_service_abstract.request');
+
+        if (substr($sapiType, 0, 3) == 'cli') {
+            $request->setRequest(new Request());
+        } else {
+            $request->setRequest($container->get('request'));
+        }
+
+        $this->setServiceRequest($request);
         $this->setServiceResponse($container->get('application_service_abstract.response'));
         $this->setPersistenceManager($container->get('application_service_abstract.persistence_manager.orm'));
         $this->setValidator($container->get('validator'));

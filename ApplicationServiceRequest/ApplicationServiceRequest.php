@@ -10,7 +10,7 @@ abstract class ApplicationServiceRequest implements ApplicationServiceRequestInt
 {
     private $request;
     
-    public function __construct(Request $request)
+    public function __construct(Request $request = null)
     {
         $this->request = $request;
     }
