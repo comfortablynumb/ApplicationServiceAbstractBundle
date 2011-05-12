@@ -412,6 +412,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
                         throw $e;
                     } else {
                         $this->setServiceResponse($e->getSubServiceResponse());
+                        $this->getServiceResponse()->setErrorType($e->getPrevious()->getType());
                     }
                     
                     break;
@@ -439,7 +440,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->notifyExceptionEvent($e);
         
         if ($this->isSubService()) {
-            $e = new Exception\SubServiceException('', 0, null, $this->getServiceResponse());
+            $e = new Exception\SubServiceException('', 0, $e, $this->getServiceResponse());
             
             throw $e;
         }
