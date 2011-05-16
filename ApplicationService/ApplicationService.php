@@ -68,7 +68,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $validationErrorsFormatter    = null;
     protected $validEntityPropertiesForAcl  = null;
     
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerInterface $container, array $services = array())
     {
         $this->setContainer($container);
 
@@ -87,11 +87,19 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->setValidator($container->get('validator'));
         $this->setDispatcher($container->get('application_service_abstract.event_dispatcher'));
         $this->setSession($container->get('session'));
-        $this->setRepository($this->getPersistenceManager()->getRepository($this->getFullEntityClass()));
+
+        if ($this->getFullEntityClass()) {
+            $this->setRepository($this->getPersistenceManager()->getRepository($this->getFullEntityClass()));
+        }
+
         $this->setAclManager($container->get('application_service_abstract.acl_manager'));
         $this->setFinderOperators();
         $this->setPermissions();
         $this->setValidationErrorsFormatter($container->get('application_service_abstract.validation_errors_formatter'));
+
+        if (!empty($services)) {
+            $this->setServices($services);
+        }
     }
     
     public function setFinderOperators()
@@ -1753,5 +1761,25 @@ abstract class ApplicationService implements ApplicationServiceInterface
         {
             return false;
         }
+    }
+
+    public function getAliasForDql()
+    {
+        return false;
+    }    
+
+    public function getDefaultOrderByColumn()
+    {
+        return false;
+    }
+
+    public function getDefaultOrderType()
+    {
+        return false;
+    }
+
+    public function getFullEntityClass()
+    {
+        return false;
     }
 }
