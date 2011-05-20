@@ -31,7 +31,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     // Finder Special Operators for Fields
     const FILTER_NOT_EQUAL_TO                   = ':!=:';
-    const FILTER_LIKE                           = ':%:';
+    const FILTER_LIKE                           = ':LIKE:';
     const FILTER_GREATER_THAN                   = ':>:';
     const FILTER_GREATER_THAN_OR_EQUAL_TO       = ':>=:';
     const FILTER_LESS_THAN                      = ':<:';
@@ -67,6 +67,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $permissions                  = array();
     protected $validationErrorsFormatter    = null;
     protected $validEntityPropertiesForAcl  = null;
+    protected $entityClassMetadata          = null;
     
     public function __construct(ContainerInterface $container, array $services = array())
     {
@@ -90,6 +91,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
 
         if ($this->getFullEntityClass()) {
             $this->setRepository($this->getPersistenceManager()->getRepository($this->getFullEntityClass()));
+            
+            $metadata = $this->getPersistenceManager()->getClassMetadata($this->getFullEntityClass());
+            $this->setEntityClassMetadata($metadata);
         }
 
         $this->setAclManager($container->get('application_service_abstract.acl_manager'));
@@ -122,6 +126,16 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function getFinderOperators()
     {
         return $this->finderOperators;
+    }
+
+    public function getEntityClassMetadata()
+    {
+        return $this->entityClassMetadata;
+    }
+
+    public function setEntityClassMetadata($metadata)
+    {
+        $this->entityClassMetadata = $metadata;
     }
     
     public function setPermissions()
@@ -654,7 +668,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $selectDqlPart          = $qb->getDqlPart( 'select' );
         $fromDqlPart            = $qb->getDqlPart( 'from' );
         $actualRootAlias        = $this->getAliasForEntityFromDql( $qb );
-        $rootAlias              = $actualRootAlias ? $actualRootAlias : $this->getAliasForDql();
+        $rootAlias              = $actualRootAlias !== false ? $actualRootAlias : $this->getAliasForDql();
         $validFieldsForSearch   = $this->getValidFieldsForSearch();
         $validFieldsForOrder    = $this->getValidFieldsForOrder();
         
@@ -708,7 +722,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
                     
                     $expr = $this->createExpressionFromFieldName( $qb, $field, $value, $rootAlias );
                     
-                    $qb->where( $expr );
+                    $qb->andWhere( '('.$expr.')' );
                 }
                 else
                 {
@@ -716,7 +730,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
                     
                     $fieldDql = strpos( $testField, '.' ) === false ? $rootAlias.'.'.$testField : $testField;
                     
-                    $qb->andWhere( $qb->expr()->eq( $fieldDql, $value ) );
+                    $qb->andWhere( $qb->expr()->eq( $fieldDql, $qb->expr()->literal($value) ) );
                 }
             }
         }
@@ -793,15 +807,15 @@ abstract class ApplicationService implements ApplicationServiceInterface
                 
                 break;
             case self::FILTER_LIKE:
-                $expr = $this->getLikeExpression( $qb, $field, $value );
+                $expr = $this->getLikeExpression( $qb, $rootAlias, $value );
                 
                 break;
             case self::FILTER_AND:
-                $expr = $this->getAndExpression( $qb, $value );
+                $expr = $this->getAndExpression( $qb, $rootAlias, $value );
                 
                 break;
             case self::FILTER_OR:
-                $expr = $this->getOrExpression( $qb, $value );
+                $expr = $this->getOrExpression( $qb, $rootAlias, $value );
                 
                 break;
             case self::FILTER_IN:
@@ -819,55 +833,71 @@ abstract class ApplicationService implements ApplicationServiceInterface
 
     public function getGreaterThanExpression( QueryBuilder $qb, $field, $value )
     {
-        return $qb->expr()->gt( $field, $value );
+        return $qb->expr()->gt( $field, $qb->expr()->literal($value) );
     }
     
     public function getGreaterThanOrEqualToExpression( QueryBuilder $qb, $field, $value )
     {
-        return $qb->expr()->gte( $field, $value );
+        return $qb->expr()->gte( $field, $qb->expr()->literal($value) );
     }
     
     public function getLessThanExpression( QueryBuilder $qb, $field, $value )
     {
-        return $qb->expr()->lt( $field, $value );
+        return $qb->expr()->lt( $field, $qb->expr()->literal($value) );
     }
     
     public function getLessThanOrEqualToExpression( QueryBuilder $qb, $field, $value )
     {
-        return $qb->expr()->lte( $field, $value );
+        return $qb->expr()->lte( $field, $qb->expr()->literal($value) );
     }
     
     public function getEqualToExpression( QueryBuilder $qb, $field, $value )
     {
-        return $qb->expr()->eq( $field, $value );
+        $metadata = $this->getEntityClassMetadata();
+        $fieldMapping = $metadata->getFieldMapping(strpos( $field, '.' ) === false ? $field : substr($field, strpos($field, '.') + 1));
+        $fieldIsBoolean = isset($fieldMapping['type']) && $fieldMapping['type'] === 'boolean' ? true : false;
+
+        if ($fieldIsBoolean) {
+            $value = $value === 'false' || $value === 0 || $value === '0' || $value === 'off' ? false : true;
+        }
+
+        return $qb->expr()->eq( $field, $qb->expr()->literal($value) );
     }
     
     public function getNotEqualToExpression( QueryBuilder $qb, $field, $value )
     {
-        return $qb->expr()->neq( $field, $value );
+        return $qb->expr()->neq( $field, $qb->expr()->literal($value) );
     }
     
     public function getInstanceOfExpression( QueryBuilder $qb, $alias, $class )
     {
-        $validClasses = $this->getValidClassesForInstanceOfOperator();
+        /*$validClasses = $this->getValidClassesForInstanceOfOperator();
         
         if ( !in_array( $class, array_keys( $validClasses ) ) )
         {
             throw new Exception\ApplicationGeneralException( sprintf( 'La clase "%s" para el operador "%s" es invalida.', $class, self::FILTER_INSTANCE_OF ) );
+        }*/
+
+        $alias  = is_null( $alias ) ? $qb->getRootAlias() : $alias;
+        //$class  = $validClasses[ $class ];
+        
+        return sprintf( '%s INSTANCE OF %s', $alias, $class );
+    }
+    
+    public function getLikeExpression(QueryBuilder $qb, $alias, $array)
+    {
+        if (!is_array($array) || count($array) != 1) {
+            throw new Exception\ApplicationGeneralException(sprintf('El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_LIKE, print_r($array)));
         }
         
-        $alias  = is_null( $alias ) ? $qb->getRootAlias() : $alias;
-        $class  = $validClasses[ $class ];
-        
-        return $qb->expr()->andx( sprintf( '%s INSTANCE OF %s', $alias, $class ) );
+        $field = key($array);
+        $value = current($array);
+        $fieldDql = strpos($field, '.') !== false ? $field : sprintf('%s.%s', $alias, $field);
+
+        return $qb->expr()->like($fieldDql, $qb->expr()->literal('%'.$value.'%'));
     }
     
-    public function getLikeExpression( QueryBuilder $qb, $field, $value )
-    {
-        return $qb->expr()->like( $field, $qb->expr()->literal( $value ) );
-    }
-    
-    public function getAndExpression( QueryBuilder $qb, $arrayOfFieldsAndValues )
+    public function getAndExpression( QueryBuilder $qb, $rootAlias, $arrayOfFieldsAndValues )
     {
         if ( !is_array( $arrayOfFieldsAndValues ) )
         {
@@ -875,31 +905,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
         }
         
         $expr = $qb->expr()->andx();
-        
-        foreach ( $arrayOfFieldsAndValues as $index => $value )
-        {
-            if ( !is_array( $value ) )
-            {
-                throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_AND, $value ) );
-            }
-            
-            $field = key( $value );
-            $value = $value[ $field ];
-            
-            $expr->add( $this->createExpressionFromFieldName( $qb, $field, $value ) );
-        }
-        
-        return $expr;
-    }
-    
-    public function getOrExpression( QueryBuilder $qb, $arrayOfFieldsAndValues )
-    {
-        if ( !is_array( $arrayOfFieldsAndValues ) )
-        {
-            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_AND, $arrayOfFieldsAndValues ) );
-        }
-        
-        $expr = $qb->expr()->orx();
         
         foreach ( $arrayOfFieldsAndValues as $field => $value )
         {
@@ -911,7 +916,32 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $field = key( $value );
             $value = $value[ $field ];
             
-            $expr->add( $this->createExpressionFromFieldName( $qb, $field, $value ) );
+            $expr->add( $this->createExpressionFromFieldName( $qb, $field, $value, $rootAlias ) );
+        }
+        
+        return $expr;
+    }
+    
+    public function getOrExpression( QueryBuilder $qb, $rootAlias, $arrayOfFieldsAndValues )
+    {
+        if ( !is_array( $arrayOfFieldsAndValues ) )
+        {
+            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_OR, $arrayOfFieldsAndValues ) );
+        }
+        
+        $expr = $qb->expr()->orx();
+        
+        foreach ( $arrayOfFieldsAndValues as $field => $value )
+        {
+            if ( !is_array( $value ) )
+            {
+                throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_OR, $value ) );
+            }
+            
+            $field = key( $value );
+            $value = $value[ $field ];
+            
+            $expr->add( $this->createExpressionFromFieldName( $qb, $field, $value, $rootAlias ) );
         }
         
         return $expr;
@@ -921,7 +951,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     {
         if ( !is_array( $arrayOfFieldsAndValues ) )
         {
-            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_AND, $arrayOfFieldsAndValues ) );
+            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_IN, $arrayOfFieldsAndValues ) );
         }
         
         return $qb->expr()->in( $field, $arrayOfValues );
@@ -1545,7 +1575,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function getAliasForEntityFromDql( QueryBuilder $qb )
     {
-        $fromDqlPart    = $qb->getDqlPart( 'from' );
+        $fromDqlPart = $qb->getDqlPart( 'from' );
         
         foreach ( $fromDqlPart as $fromPart )
         {
