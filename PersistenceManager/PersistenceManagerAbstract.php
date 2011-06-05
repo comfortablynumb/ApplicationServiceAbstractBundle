@@ -3,6 +3,7 @@
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
+use ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\FinderQueryBuilder\FinderQueryBuilderInterface;
 
 /**
  * Abstract PersistanceManager from which ORM and ODM 

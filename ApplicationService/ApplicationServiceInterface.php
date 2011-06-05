@@ -24,6 +24,7 @@ interface ApplicationServiceInterface
     public function concurrencyLockIsOptimistic();
     public function concurrencyLockIsPessimisticRead();
     public function concurrencyLockIsPessimisticWrite();
+    public function createFinderQueryBuilder();
     public function disableConcurrencyLock();
     public function doFind( array $filters = array(), $orderBy = null, $orderType = null, $start = null, $limit = null, $onlyCount = false, $qb = null, $hydrationMode = AbstractQuery::HYDRATE_ARRAY );
     public function doSave( array $data, $object );

@@ -19,6 +19,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\Appli
 use ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceManagerInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Event;
+use ENC\Bundle\ApplicationServiceAbstractBundle\FinderQueryBuilder;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatterInterface;
 
 abstract class ApplicationService implements ApplicationServiceInterface
@@ -28,19 +29,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
     const CONCURRENCY_LOCK_PESSIMISTIC_READ     = 2;
     const CONCURRENCY_LOCK_PESSIMISTIC_WRITE    = 3;
     const CONCURRENCY_LOCK_OPTIMISTIC           = 4;
-    
-    // Finder Special Operators for Fields
-    const FILTER_NOT_EQUAL_TO                   = ':!=:';
-    const FILTER_LIKE                           = ':LIKE:';
-    const FILTER_GREATER_THAN                   = ':>:';
-    const FILTER_GREATER_THAN_OR_EQUAL_TO       = ':>=:';
-    const FILTER_LESS_THAN                      = ':<:';
-    const FILTER_LESS_THAN_OR_EQUAL_TO          = ':<=:';
-    const FILTER_EQUAL_TO                       = ':=:';
-    const FILTER_AND                            = ':AND:';
-    const FILTER_OR                             = ':OR:';
-    const FILTER_IN                             = ':IN:';
-    const FILTER_INSTANCE_OF                    = ':INSTANCE_OF:';
     
     // Permissions
     const PERMISSIONS_CREATE                    = 'CREATE';
@@ -63,7 +51,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $isSubService                 = false;
     protected $container                    = null;
     protected $aclManager                   = null;
-    protected $finderOperators              = array();
     protected $permissions                  = array();
     protected $validationErrorsFormatter    = null;
     protected $validEntityPropertiesForAcl  = null;
@@ -97,35 +84,12 @@ abstract class ApplicationService implements ApplicationServiceInterface
         }
 
         $this->setAclManager($container->get('application_service_abstract.acl_manager'));
-        $this->setFinderOperators();
         $this->setPermissions();
         $this->setValidationErrorsFormatter($container->get('application_service_abstract.validation_errors_formatter'));
 
         if (!empty($services)) {
             $this->setServices($services);
         }
-    }
-    
-    public function setFinderOperators()
-    {
-        $this->finderOperators = array(
-            self::FILTER_NOT_EQUAL_TO               => '!=',
-            self::FILTER_LIKE                       => 'LIKE',
-            self::FILTER_GREATER_THAN               => '>',
-            self::FILTER_GREATER_THAN_OR_EQUAL_TO   => '>=',
-            self::FILTER_LESS_THAN                  => '<',
-            self::FILTER_LESS_THAN_OR_EQUAL_TO      => '<=',
-            self::FILTER_EQUAL_TO                   => '=',
-            self::FILTER_AND                        => 'AND',
-            self::FILTER_OR                         => 'OR',
-            self::FILTER_IN                         => 'IN',
-            self::FILTER_INSTANCE_OF                => 'INSTANCE OF'
-        );
-    }
-     
-    public function getFinderOperators()
-    {
-        return $this->finderOperators;
     }
 
     public function getEntityClassMetadata()
@@ -584,10 +548,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function getBaseQueryBuilderForFindAction( $qb = null )
     {
-        $qb = is_null( $qb ) ? $this->createQueryBuilderForPersistenceManager() : $qb;
+        $qb = is_null($qb) ? $this->getPersistenceManager()->createQueryBuilder($this->getFullEntityClass()) : $qb;
         
-        if ( method_exists( $qb, 'getDqlPart' ) )
-        {
+        if ($this->isUsingAnORM()) {
             $alias  = $this->getAliasForDql();
             $select = $this->getBaseSelectString();
             $select = str_replace( '%s', $alias, $select );
@@ -615,422 +578,31 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->getBaseQueryBuilderForFindAction( $qb );
     }
 
-    public function getFinderQueryBuilder( array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $onlyCount = false, $qb = null )
+    public function getFinderQueryBuilder(array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $onlyCount = false, $qb = null)
     {
-        if ( is_null( $qb ) )
-        {
-            $qb = $this->createQueryBuilderForPersistenceManager();
+        if (!is_null($start) && !is_int($start)) {
+            throw new \InvalidArgumentException(sprintf('El parametro "start" debe ser un entero o NULL. Se recibio: "%s".', $start));
         }
         
-        if ( !is_null( $start ) && !is_int( $start ) )
-        {
-            throw new \InvalidArgumentException( sprintf( 'El parametro "start" debe ser un entero o NULL. Se recibio: "%s".', $start ) );
+        if (!is_null($limit) && !is_int($limit)) {
+            throw new \InvalidArgumentException(sprintf('El parametro "limit" debe ser un entero o NULL. Se recibio: "%s".', $limit));
         }
         
-        if ( !is_null( $limit ) && !is_int( $limit ) )
-        {
-            throw new \InvalidArgumentException( sprintf( 'El parametro "limit" debe ser un entero o NULL. Se recibio: "%s".', $limit ) );
+        if (!is_bool($onlyCount)) {
+            throw new \InvalidArgumentException(sprintf('El parametro "onlyCount" debe ser un boolean. Se recibio: "%s".', $onlyCount));
         }
         
-        if ( !is_bool( $onlyCount ) )
-        {
-            throw new \InvalidArgumentException( sprintf( 'El parametro "onlyCount" debe ser un boolean. Se recibio: "%s".', $onlyCount ) );
+        $orderBy = !is_null($orderBy) ? $orderBy : $this->getDefaultOrderByColumn();
+        $orderType = !is_null($orderType) ? $orderType : $this->getDefaultOrderType();
+        $validFieldsForOrder = $this->getValidFieldsForOrder();
+        
+        if (!in_array($orderBy, array_keys($validFieldsForOrder))) {
+            throw new Exception\DatabaseInvalidFieldException(sprintf('El campo "%s" ingresado para el ordenamiento es invalido.', $orderBy));
         }
         
-        $orderBy                = !is_null( $orderBy ) ? $orderBy : $this->getDefaultOrderByColumn();
-        $orderType              = !is_null( $orderType ) ? $orderType : $this->getDefaultOrderType();
-        $validFieldsForOrder    = $this->getValidFieldsForOrder();
-        
-        if ( !in_array( $orderBy, array_keys( $validFieldsForOrder ) ) )
-        {
-            throw new Exception\DatabaseInvalidFieldException( sprintf( 'El campo "%s" ingresado para el ordenamiento es invalido.', $orderBy ) );
-        }
-        
-        return $this->getFinderQueryBuilderForPersistenceManager( $filters, $start, $limit, $orderBy, $orderType, $onlyCount, $qb );
-    }
-    
-    public function getFinderQueryBuilderForPersistenceManager( array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $onlyCount = false, $qb = null )
-    {
-        $pm = $this->getPersistenceManager();
-        
-        if ( method_exists( $pm->getPersistenceManager(), 'getDocumentDatabases' ) )
-        {
-            return $this->getFinderQueryBuilderForDocumentManager( $filters, $start, $limit, $orderBy, $orderType, $onlyCount, $qb );
-        }
-        else
-        {
-            return $this->getFinderQueryBuilderForEntityManager( $filters, $start, $limit, $orderBy, $orderType, $onlyCount, $qb );
-        }
-    }
-    
-    public function getFinderQueryBuilderForEntityManager( array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $onlyCount = false, $qb = null )
-    {
-        $selectDqlPart          = $qb->getDqlPart( 'select' );
-        $fromDqlPart            = $qb->getDqlPart( 'from' );
-        $actualRootAlias        = $this->getAliasForEntityFromDql( $qb );
-        $rootAlias              = $actualRootAlias !== false ? $actualRootAlias : $this->getAliasForDql();
-        $validFieldsForSearch   = $this->getValidFieldsForSearch();
-        $validFieldsForOrder    = $this->getValidFieldsForOrder();
-        
-        if ( $onlyCount === true )
-        {
-            $qb->select( sprintf( 'COUNT( %s )', $rootAlias ) );
-        }
-        else if ( empty( $selectDqlPart ) )
-        {
-            $qb->select( $rootAlias );
-        }
-        
-        if ( empty( $fromDqlPart ) )
-        {
-            $qb->from( $this->getFullEntityClass(), $rootAlias );
-        }
-        
-        foreach ( $filters as $field => $value )
-        {
-            if ( !is_array( $value ) && trim( $value ) === '' )
-            {
-                continue;
-            }
-            
-            if ( $field === 'allFields' )
-            {
-                $orExpr = $qb->expr()->orx();
-                
-                foreach ( $validFieldsForSearch as $field )
-                {
-                    // Cambiamos los espacios por %
-                    $fieldDql   = strpos( $field, '.' ) === false ? $rootAlias.'.'.$field : $field;
-                    $value      = str_replace( ' ', '%', $value );
-                    
-                    $orExpr->add( $qb->expr()->like( $fieldDql, $qb->expr()->literal( '%'.$value.'%' ) ) );
-                }
-                
-                $qb->andWhere( '( '.$orExpr.' )' );
-            }
-            else
-            {
-                $specialOperator    = $this->getSpecialOperatorFromFieldName( $field );
-                $testField          = str_replace( $specialOperator, '', $field );
-                
-                if ( $specialOperator !== false )
-                {
-                    if ( $specialOperator !== self::FILTER_INSTANCE_OF && $specialOperator !== self::FILTER_AND && $specialOperator !== self::FILTER_OR && $specialOperator !== self::FILTER_IN )
-                    {
-                        $this->validateFieldForSearch( $testField );
-                    }
-                    
-                    $expr = $this->createExpressionFromFieldName( $qb, $field, $value, $rootAlias );
-                    
-                    $qb->andWhere( '('.$expr.')' );
-                }
-                else
-                {
-                    $this->validateFieldForSearch( $testField );
-                    
-                    $fieldDql = strpos( $testField, '.' ) === false ? $rootAlias.'.'.$testField : $testField;
-                    
-                    $qb->andWhere( $qb->expr()->eq( $fieldDql, $qb->expr()->literal($value) ) );
-                }
-            }
-        }
-        
-        $orderBy = $validFieldsForOrder[ $orderBy ];
-        $orderBy = strpos( $orderBy, '.' ) === false ? $rootAlias.'.'.$orderBy : $orderBy;
-        
-        $qb->addOrderBy( $orderBy, $orderType );
-        
-        if ( $onlyCount === false )
-        {
-            if ( !is_null( $limit ) && $limit > 0 )
-            {
-                $qb->setMaxResults( $limit );
-                
-                if ( !is_null( $start ) )
-                {
-                    $qb->setFirstResult( $start );
-                }
-            }
-        }
-        else
-        {
-            $qb->setFirstResult( null );
-            $qb->setMaxResults( null );
-        }
-        
-        return $qb;
-    }
-    
-    public function createExpressionFromFieldName( QueryBuilder $qb, $field, $value, $rootAlias = null )
-    {
-        $specialOperator    = $this->getSpecialOperatorFromFieldName( $field );
-        $field              = str_replace( $specialOperator, '', $field );
-        
-        if ( !is_null( $rootAlias ) )
-        {
-            $field = strpos( $field, '.' ) !== false ? $field : $rootAlias.'.'.$field;
-        }
-        
-        if ( $specialOperator === false )
-        {
-            $specialOperator = self::FILTER_EQUAL_TO;
-        }
-
-        switch ( $specialOperator )
-        {
-            case self::FILTER_GREATER_THAN:
-                $expr = $this->getGreaterThanExpression( $qb, $field, $value );
-                
-                break;
-            case self::FILTER_GREATER_THAN_OR_EQUAL_TO:
-                $expr = $this->getGreaterThanOrEqualToExpression( $qb, $field, $value );
-                
-                break;
-            case self::FILTER_LESS_THAN:
-                $expr = $this->getLessThanExpression( $qb, $field, $value );
-                
-                break;
-            case self::FILTER_LESS_THAN_OR_EQUAL_TO:
-                $expr = $this->getLessThanOrEqualToExpression( $qb, $field, $value );
-                
-                break;
-            case self::FILTER_EQUAL_TO:
-                $expr = $this->getEqualToExpression( $qb, $field, $value );
-                
-                break;
-            case self::FILTER_NOT_EQUAL_TO:
-                $expr = $this->getNotEqualToExpression( $qb, $field, $value );
-                
-                break;
-            case self::FILTER_INSTANCE_OF:
-                $expr = $this->getInstanceOfExpression( $qb, $rootAlias, $value );
-                
-                break;
-            case self::FILTER_LIKE:
-                $expr = $this->getLikeExpression( $qb, $rootAlias, $value );
-                
-                break;
-            case self::FILTER_AND:
-                $expr = $this->getAndExpression( $qb, $rootAlias, $value );
-                
-                break;
-            case self::FILTER_OR:
-                $expr = $this->getOrExpression( $qb, $rootAlias, $value );
-                
-                break;
-            case self::FILTER_IN:
-                $expr = $this->getInExpression( $qb, $field, $value );
-                
-                break;
-            default:
-                throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" ingresado para el campo "%s" es invalido.', $specialOperator, $field ) );
-                
-                break;
-        }
-        
-        return $expr;
+        return $this->createFinderQueryBuilder()->create($filters, $start, $limit, $orderBy, $orderType, $onlyCount, $qb);
     }
 
-    public function getGreaterThanExpression( QueryBuilder $qb, $field, $value )
-    {
-        return $qb->expr()->gt( $field, $qb->expr()->literal($value) );
-    }
-    
-    public function getGreaterThanOrEqualToExpression( QueryBuilder $qb, $field, $value )
-    {
-        return $qb->expr()->gte( $field, $qb->expr()->literal($value) );
-    }
-    
-    public function getLessThanExpression( QueryBuilder $qb, $field, $value )
-    {
-        return $qb->expr()->lt( $field, $qb->expr()->literal($value) );
-    }
-    
-    public function getLessThanOrEqualToExpression( QueryBuilder $qb, $field, $value )
-    {
-        return $qb->expr()->lte( $field, $qb->expr()->literal($value) );
-    }
-    
-    public function getEqualToExpression( QueryBuilder $qb, $field, $value )
-    {
-        $metadata = $this->getEntityClassMetadata();
-        $fieldMapping = $metadata->getFieldMapping(strpos( $field, '.' ) === false ? $field : substr($field, strpos($field, '.') + 1));
-        $fieldIsBoolean = isset($fieldMapping['type']) && $fieldMapping['type'] === 'boolean' ? true : false;
-
-        if ($fieldIsBoolean) {
-            $value = $value === 'false' || $value === 0 || $value === '0' || $value === 'off' ? false : true;
-        }
-
-        return $qb->expr()->eq( $field, $qb->expr()->literal($value) );
-    }
-    
-    public function getNotEqualToExpression( QueryBuilder $qb, $field, $value )
-    {
-        return $qb->expr()->neq( $field, $qb->expr()->literal($value) );
-    }
-    
-    public function getInstanceOfExpression( QueryBuilder $qb, $alias, $class )
-    {
-        /*$validClasses = $this->getValidClassesForInstanceOfOperator();
-        
-        if ( !in_array( $class, array_keys( $validClasses ) ) )
-        {
-            throw new Exception\ApplicationGeneralException( sprintf( 'La clase "%s" para el operador "%s" es invalida.', $class, self::FILTER_INSTANCE_OF ) );
-        }*/
-
-        $alias  = is_null( $alias ) ? $qb->getRootAlias() : $alias;
-        //$class  = $validClasses[ $class ];
-        
-        return sprintf( '%s INSTANCE OF %s', $alias, $class );
-    }
-    
-    public function getLikeExpression(QueryBuilder $qb, $alias, $array)
-    {
-        if (!is_array($array) || count($array) != 1) {
-            throw new Exception\ApplicationGeneralException(sprintf('El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_LIKE, print_r($array)));
-        }
-        
-        $field = key($array);
-        $value = current($array);
-        $fieldDql = strpos($field, '.') !== false ? $field : sprintf('%s.%s', $alias, $field);
-
-        return $qb->expr()->like($fieldDql, $qb->expr()->literal('%'.$value.'%'));
-    }
-    
-    public function getAndExpression( QueryBuilder $qb, $rootAlias, $arrayOfFieldsAndValues )
-    {
-        if ( !is_array( $arrayOfFieldsAndValues ) )
-        {
-            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_AND, $arrayOfFieldsAndValues ) );
-        }
-        
-        $expr = $qb->expr()->andx();
-        
-        foreach ( $arrayOfFieldsAndValues as $field => $value )
-        {
-            if ( !is_array( $value ) )
-            {
-                throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_AND, $value ) );
-            }
-            
-            $field = key( $value );
-            $value = $value[ $field ];
-            
-            $expr->add( $this->createExpressionFromFieldName( $qb, $field, $value, $rootAlias ) );
-        }
-        
-        return $expr;
-    }
-    
-    public function getOrExpression( QueryBuilder $qb, $rootAlias, $arrayOfFieldsAndValues )
-    {
-        if ( !is_array( $arrayOfFieldsAndValues ) )
-        {
-            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_OR, $arrayOfFieldsAndValues ) );
-        }
-        
-        $expr = $qb->expr()->orx();
-        
-        foreach ( $arrayOfFieldsAndValues as $field => $value )
-        {
-            if ( !is_array( $value ) )
-            {
-                throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_OR, $value ) );
-            }
-            
-            $field = key( $value );
-            $value = $value[ $field ];
-            
-            $expr->add( $this->createExpressionFromFieldName( $qb, $field, $value, $rootAlias ) );
-        }
-        
-        return $expr;
-    }
-    
-    public function getInExpression( QueryBuilder $qb, $field, $arrayOfValues )
-    {
-        if ( !is_array( $arrayOfFieldsAndValues ) )
-        {
-            throw new Exception\ApplicationGeneralException( sprintf( 'El operador "%s" requiere un array de valores como valor. Se recibió: "%s".', self::FILTER_IN, $arrayOfFieldsAndValues ) );
-        }
-        
-        return $qb->expr()->in( $field, $arrayOfValues );
-    }
-    
-    public function validateFieldForSearch( $field )
-    {
-        $validFieldsForSearch = $this->getValidFieldsForSearch();
-        
-        if ( !in_array( $field, $validFieldsForSearch ) )
-        {
-            throw new Exception\DatabaseInvalidFieldException( sprintf( 'El campo "%s" ingresado para la busqueda es invalido.', $field ) );
-        }
-        
-        return true;
-    }
-    
-    public function getFinderQueryBuilderForDocumentManager( array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $onlyCount = false, $qb = null )
-    {
-        $validFieldsForSearch = $this->getValidFieldsForSearch();
-        
-        foreach ( $filters as $field => $value )
-        {
-            if ( trim( $value ) === '' )
-            {
-                continue;
-            }
-            
-            if ( $field === 'allFields' )
-            {
-                foreach ( $validFieldsForSearch as $field )
-                {
-                    $qb->field( $field )->equals( '/'.$value.'/' );
-                }
-            }
-            else
-            {
-                $specialOperator    = $this->getSpecialOperatorFromFieldName( $field );
-                $field              = str_replace( $specialOperator, '', $field );
-                
-                if ( in_array( $field, $validFieldsForSearch ) )
-                {
-                    $qb->field( $field )->equals( $value );
-                }
-                else
-                {
-                    throw new Exception\DatabaseInvalidFieldException( sprintf( 'El campo "%s" ingresado para la busqueda es invalido.', $field ) );
-                }
-            }
-        }
-        
-        if ( !is_null( $orderBy ) && !is_null( $orderType ) )
-        {
-            $qb->sort( $orderBy, $orderType );
-        }
-        
-        if ( !is_null( $start ) )
-        {
-            $qb->skip( $start );
-        }
-        
-        if ( !is_null( $limit ) )
-        {
-            $qb->limit( $limit );
-        }
-        
-        return $qb;
-    }
-    
-    public function getSpecialOperatorFromFieldName( $fieldName )
-    {
-        if ( preg_match( '/(:.+:)/', $fieldName, $matches ) )
-        {
-            return $matches[ 1 ];
-        }
-        
-        return false;
-    }
-    
     public function entityExists( $id, $lockMode = null, $lockVersion = null )
     {
         try
@@ -1690,24 +1262,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $event = new Event\ExceptionEvent($this, $e);
         $this->getDispatcher()->dispatch(Event\Event::ON_EXCEPTION, $event);
     }
-    
-    public function createQueryBuilderForPersistenceManager()
-    {
-        $qb = null;
-        
-        if ( $this->isUsingAnODM() )
-        {
-            $qb = $this->getPersistenceManager()->createQueryBuilder( $this->getFullEntityClass() );
-        }
-        else
-        {
-            $qb = $this->getPersistenceManager()->createQueryBuilder();
-        }
-        
-        return $qb;
-    }
-    
-    public function isUsingAnODM()
+
+    public function isUsingAnODM($whichODM = 'mongodb')
     {
         $pm = $this->getPersistenceManager();
         
@@ -1790,6 +1346,27 @@ abstract class ApplicationService implements ApplicationServiceInterface
         else
         {
             return false;
+        }
+    }
+    
+    public function createFinderQueryBuilder()
+    {
+        if ($this->isUsingAnORM()) {
+            return new FinderQueryBuilder\ORM\FinderQueryBuilder(
+                $this->getPersistenceManager(), 
+                $this->getFullEntityClass(), 
+                $this->getAliasForDql(), 
+                $this->getValidFieldsForSearch(),
+                $this->getValidFieldsForOrder()
+            );
+        } else {
+            return new FinderQueryBuilder\ODM\MongoDB\FinderQueryBuilder(
+                $this->getPersistenceManager(), 
+                $this->getFullEntityClass(), 
+                $this->getAliasForDql(), 
+                $this->getValidFieldsForSearch(),
+                $this->getValidFieldsForOrder()
+            );
         }
     }
 
