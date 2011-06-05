@@ -1164,103 +1164,103 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function notifyPreFindEvent(array $data, $qb = null)
     {
         $event = new Event\PreFindEvent($this, $data, $qb);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_FIND, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_FIND, $event);
     }
     
     public function notifyPostFindEvent(array $data, array $results)
     {
         $event = new Event\PostFindEvent($this, $data, $results);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_FIND, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_FIND, $event);
     }
     
     public function notifyPreCreateEvent(array $data, $entity)
     {
         $event = new Event\PreCreateEvent($this, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_CREATE, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_CREATE, $event);
     }
     
     public function notifyPostCreateEvent(array $data, $entity)
     {
         $event = new Event\PostCreateEvent($this, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_CREATE, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_CREATE, $event);
     }
     
     public function notifyPreUpdateEvent(array $data, $entity)
     {
         $event = new Event\PreUpdateEvent($this, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_UPDATE, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_UPDATE, $event);
     }
     
     public function notifyPostUpdateEvent(array $data, $entity)
     {
         $event = new Event\PostUpdateEvent($this, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_UPDATE, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_UPDATE, $event);
     }
     
     public function notifyPreDeleteEvent($id, $entity)
     {
         $event = new Event\PreDeleteEvent($this, $id, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_DELETE, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_DELETE, $event);
     }
     
     public function notifyPostDeleteEvent( $id, $entity )
     {
         $event = new Event\PostDeleteEvent($this, $id, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_DELETE, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_DELETE, $event);
     }
 
     public function notifyPrePersistEvent($action, array $data, $entity)
     {
         $event = new Event\PrePersistEvent($this, $action, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_PERSIST, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_PERSIST, $event);
     }
 
     public function notifyPostPersistEvent($action, array $data, $entity)
     {
         $event = new Event\PostPersistEvent($this, $action, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_PERSIST, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_PERSIST, $event);
     }
 
     public function notifyPreCommitEvent($action, array $data, $entity)
     {
         $event = new Event\PreCommitEvent($this, $action, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_COMMIT, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_COMMIT, $event);
     }
 
     public function notifyPostCommitEvent($action, array $data, $entity)
     {
         $event = new Event\PostCommitEvent($this, $action, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_COMMIT, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_COMMIT, $event);
     }
 
     public function notifyPreDataBindingEvent(array $data, $entity)
     {
         $event = new Event\PreDataBindingEvent($this, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_DATA_BINDING, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_DATA_BINDING, $event);
     }
 
     public function notifyPostDataBindingEvent(array $data, $entity)
     {
         $event = new Event\PostDataBindingEvent($this, $data, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_DATA_BINDING, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_DATA_BINDING, $event);
     }
 
     public function notifyPreDataValidationEvent($entity)
     {
         $event = new Event\PreDataValidationEvent($this, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_PRE_DATA_VALIDATION, $event);
+        $this->getDispatcher()->dispatch(Event\Event::PRE_DATA_VALIDATION, $event);
     }
 
     public function notifyPostDataValidationEvent($entity)
     {
         $event = new Event\PostDataValidationEvent($this, $entity);
-        $this->getDispatcher()->dispatch(Event\Event::ON_POST_DATA_VALIDATION, $event);
+        $this->getDispatcher()->dispatch(Event\Event::POST_DATA_VALIDATION, $event);
     }
 
     public function notifyExceptionEvent(\Exception $e)
     {
         $event = new Event\ExceptionEvent($this, $e);
-        $this->getDispatcher()->dispatch(Event\Event::ON_EXCEPTION, $event);
+        $this->getDispatcher()->dispatch(Event\Event::EXCEPTION, $event);
     }
 
     public function isUsingAnODM($whichODM = 'mongodb')

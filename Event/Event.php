@@ -9,23 +9,23 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationSe
 class Event extends SymfonyEvent
 {
     // Event Constants
-    const ON_PRE_FIND               = 'onPreFind';
-    const ON_POST_FIND              = 'onPostFind';
-    const ON_PRE_CREATE             = 'onPreCreate';
-    const ON_POST_CREATE            = 'onPostCreate';
-    const ON_PRE_UPDATE             = 'onPreUpdate';
-    const ON_POST_UPDATE            = 'onPostUpdate';
-    const ON_PRE_DELETE             = 'onPreDelete';
-    const ON_POST_DELETE            = 'onPostDelete';
-    const ON_PRE_PERSIST            = 'onPrePersist';
-    const ON_POST_PERSIST           = 'onPostPersist';
-    const ON_PRE_COMMIT             = 'onPreCommit';
-    const ON_POST_COMMIT            = 'onPostCommit';
-    const ON_PRE_DATA_BINDING       = 'onPreDataBinding';
-    const ON_POST_DATA_BINDING      = 'onPostDataBinding';
-    const ON_PRE_DATA_VALIDATION    = 'onPreDataValidation';
-    const ON_POST_DATA_VALIDATION   = 'onPostDataValidation';
-    const ON_EXCEPTION              = 'onException';
+    const PRE_FIND               = 'application_service.pre_find';
+    const POST_FIND              = 'application_service.post_find';
+    const PRE_CREATE             = 'application_service.pre_create';
+    const POST_CREATE            = 'application_service.post_create';
+    const PRE_UPDATE             = 'application_service.pre_update';
+    const POST_UPDATE            = 'application_service.post_update';
+    const PRE_DELETE             = 'application_service.pre_delete';
+    const POST_DELETE            = 'application_service.post_delete';
+    const PRE_PERSIST            = 'application_service.pre_persist';
+    const POST_PERSIST           = 'application_service.post_persist';
+    const PRE_COMMIT             = 'application_service.pre_commit';
+    const POST_COMMIT            = 'application_service.post_commit';
+    const PRE_DATA_BINDING       = 'application_service.pre_data_binding';
+    const POST_DATA_BINDING      = 'application_service.post_data_binding';
+    const PRE_DATA_VALIDATION    = 'application_service.pre_data_validation';
+    const POST_DATA_VALIDATION   = 'application_service.post_data_validation';
+    const EXCEPTION              = 'application_service.exception';
 
 
     protected $service;
