@@ -398,7 +398,12 @@ abstract class ApplicationService implements ApplicationServiceInterface
                         throw $e;
                     } else {
                         $this->setServiceResponse($e->getSubServiceResponse());
-                        $this->getServiceResponse()->setErrorType($e->getPrevious()->getType());
+                        
+                        if ($e->getPrevious() instanceof Exception\SubServiceException) {
+                            $this->getServiceResponse()->setErrorType($e->getPrevious()->getType());
+                        } else {
+                            $this->getServiceResponse()->setErrorType('ApplicationUnknownException');
+                        }
                     }
                     
                     break;
