@@ -1,6 +1,6 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\PersistenceManager;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\PersistenceManager;
 
 class TestConnection
 {

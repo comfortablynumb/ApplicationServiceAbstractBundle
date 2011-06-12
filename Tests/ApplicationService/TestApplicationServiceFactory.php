@@ -1,6 +1,6 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService;
 
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -10,25 +10,25 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\AclManager\AclManager;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationService;
-use ENC\Bundle\ApplicationServiceAbstractBundle\Test\PersistenceManager\TestPersistenceManager;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Tests\PersistenceManager\TestPersistenceManager;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestBase;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseArray;
 
 class TestApplicationServiceFactory extends WebTestCase
 {
     protected static $container = null;
-    protected $testServiceClass1 = 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestApplicationService';
-    protected $testServiceClass2 = 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestApplicationService2';
+    protected $testServiceClass1 = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationService';
+    protected $testServiceClass2 = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationService2';
 
-    public static function create($serviceClass = 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestApplicationService')
+    public static function create($serviceClass = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationService', array $services = array())
     {
-        $container = self::getNewContainer();
+        $container = self::getNewContainer($services);
         $service = new $serviceClass($container);
          
         return $service;
     }
     
-    public static function createMock($methods = array(), $constructorArguments = array(), $callConstructor = false, $className = 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestApplicationService')
+    public static function createMock($methods = array(), $constructorArguments = array(), $callConstructor = false, $className = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationService')
     {
         $instance = new self();
         $container = self::getNewContainer();
@@ -100,7 +100,7 @@ class TestApplicationServiceFactory extends WebTestCase
     {
         $instance = new self();
         
-        return $instance->getMock('ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService\TestQuery', array(), array(), '', false);
+        return $instance->getMock('ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestQuery', array(), array(), '', false);
     }
 
     public static function getDispatcherMock()
@@ -164,7 +164,8 @@ class TestApplicationServiceFactory extends WebTestCase
             }
         
             $container = new Container();
-            $container->set('application_service_abstract.persistence_manager', $pm);
+            $container->set('application_service_abstract.persistence_manager.orm', $pm);
+            $container->set('application_service_abstract.persistence_manager.odm.mongodb', $pm);
             $container->set('application_service_abstract.request', $serviceRequest);
             $container->set('application_service_abstract.response', $serviceResponse);
             $container->set('application_service_abstract.event_dispatcher', $dispatcher);

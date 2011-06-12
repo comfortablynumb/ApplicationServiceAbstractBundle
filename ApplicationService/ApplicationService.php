@@ -84,7 +84,13 @@ abstract class ApplicationService implements ApplicationServiceInterface
         }
 
         $this->setAclManager($container->get('application_service_abstract.acl_manager'));
-        $this->setPermissions();
+        $this->setPermissions(array(
+            self::PERMISSIONS_CREATE,
+            self::PERMISSIONS_EDIT,
+            self::PERMISSIONS_DELETE,
+            self::PERMISSIONS_VIEW,
+            self::PERMISSIONS_MASTER
+        ));
         $this->setValidationErrorsFormatter($container->get('application_service_abstract.validation_errors_formatter'));
 
         if (!empty($services)) {
@@ -102,15 +108,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->entityClassMetadata = $metadata;
     }
     
-    public function setPermissions()
+    public function setPermissions(array $permissions = array())
     {
-        $this->permissions = array(
-            self::PERMISSIONS_CREATE,
-            self::PERMISSIONS_EDIT,
-            self::PERMISSIONS_DELETE,
-            self::PERMISSIONS_VIEW,
-            self::PERMISSIONS_MASTER
-        );
+        $this->permissions = $permissions;
     }
     
     public function getPermissions()
@@ -230,7 +230,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function setAutomaticFlush($boolean)
     {
-        $this->isFlushAutomatic = $boolean;
+        $this->isFlushAutomatic = (bool) $boolean;
     }
     
     public function isFlushAutomatic()
@@ -240,30 +240,25 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function setIsSubService($boolean)
     {
-        $this->isSubService = $boolean;
-    }
-    
-    public function getIsSubService()
-    {
-        return $this->isSubService;
+        $this->isSubService = (bool) $boolean;
     }
     
     public function isSubService()
     {
-        return $this->getIsSubService();
+        return $this->isSubService;
     }
     
     public function isValidService($service)
     {
-        return ( $service instanceof ApplicationServiceInterface );
+        return ($service instanceof ApplicationServiceInterface);
     }
     
     public function addService(ApplicationServiceInterface $service)
     {
         if ($service->getID() === $this->getID()) {
-            throw new \LogicException(sprintf('El servicio "%s" posee el mismo ID que el servicio al cual se lo quiere agregar.', $service->getID()));
+            throw new \LogicException(sprintf('Service "%s" has the same ID than the service which you want to add.', $service->getID()));
         } elseif ($this->hasService($service->getID())) {
-            throw new \LogicException(sprintf('El servicio con ID "%s" ya ha sido agregado previamente a este servicio.', $service->getID()));
+            throw new \LogicException(sprintf('Service with ID "%s" has been added previously to this service.', $service->getID()));
         } else {
             $newService = clone $service;
             $newService->setIsSubService(true);
@@ -277,7 +272,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         if ( $this->hasService($serviceID)) {
             return $this->services[$serviceID];
         } else {
-            throw new \LogicException(sprintf('No se le ha agregado ningun servicio con ID "%s" a este servicio.', $serviceID));
+            throw new \InvalidArgumentException(sprintf('No service with ID "%s" has been added to this service.', $serviceID));
         }
     }
     
@@ -303,7 +298,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             if (!$this->isValidService($service)) {
                 $received = is_object($service) ? get_class($service) : $service;
                 
-                throw new \InvalidArgumentException(sprintf('Uno de los servicios ingresados es invalido. Debe ser una instancia de "%s". Se recibio: "%s".', 'ApplicationServiceInterface', $received));
+                throw new \InvalidArgumentException(sprintf('One of the services you tried to add is invalid. It has to be an instance of class "%s". It was received: "%s".', 'ApplicationServiceInterface', $received));
             }
             
             $this->addService($service);
@@ -314,35 +309,19 @@ abstract class ApplicationService implements ApplicationServiceInterface
     {
         return $this->getValidationErrorsFormatter()->format($object, $errorList, $formatForFieldName);
     }
-    
-    /**
-     * Validates the object based on its metadata
-     *
-     * @param mixed The object
-     *
-     * @return mixed The object
-     */
+
     public function validateObject($object)
     {
         $validator = $this->getValidator();
-        $result = $validator->validate($object);
+        $constraintValidationList = $validator->validate($object);
         
-        if ($result->count() > 0) {
-            throw new Exception\ApplicationInvalidDataException($result, $object);
+        if ($constraintValidationList->count() > 0) {
+            throw new Exception\ApplicationInvalidDataException($constraintValidationList, $object);
         }
         
         return $object;
     }
-    
-    /**
-     * Convenient method that binds the data to the 
-     * object and then runs the validation
-     *
-     * @param array The data
-     * @param mixed The object
-     *
-     * @return mixed The object with data binded and validated
-     */
+
     public function bindDataToObjectAndValidate(array $data, $object)
     {
         // Data Binding
@@ -364,7 +343,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function bindDataToObject( array $data, $object )
     {
-        $this->validateObjectIsAnInstanceOfEntity( $object );
+        $this->validateObjectIsAnInstanceOfEntityClass( $object );
         
         return $object;
     }
@@ -399,7 +378,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
                     } else {
                         $this->setServiceResponse($e->getSubServiceResponse());
                         
-                        if ($e->getPrevious() instanceof Exception\SubServiceException) {
+                        if ($e->getPrevious() instanceof Exception\ApplicationServiceExceptionInterface) {
                             $this->getServiceResponse()->setErrorType($e->getPrevious()->getType());
                         } else {
                             $this->getServiceResponse()->setErrorType('ApplicationUnknownException');
@@ -825,7 +804,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function doSave( array $data, $object, $lockMode = null, $lockVersion = null )
     {
-        $this->validateObjectIsAnInstanceOfEntity( $object );
+        $this->validateObjectIsAnInstanceOfEntityClass( $object );
         
         if ( !is_null( $lockVersion ) && ( !$this->concurrencyLockIsOptimistic() && $lockMode !== ApplicationService::CONCURRENCY_LOCK_OPTIMISTIC ) )
         {
@@ -1009,7 +988,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function getConcurrencyLock( $entity, $lockMode = null, $expectedVersion = null )
     {
-        $this->validateObjectIsAnInstanceOfEntity( $entity );
+        $this->validateObjectIsAnInstanceOfEntityClass( $entity );
         
         $lockMode = !is_null( $lockMode ) ? $this->checkIfConcurrencyLockTypeIsValid( $lockMode ) : $this->getConcurrencyLockType();
         
@@ -1029,7 +1008,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->getPersistenceManager()->lock( $entity, $lockMode, $expectedVersion );
     }
     
-    public function validateObjectIsAnInstanceOfEntity( $object )
+    public function validateObjectIsAnInstanceOfEntityClass( $object )
     {
         if ( !is_a( $object, $this->getFullEntityClass() ) )
         {

@@ -1,9 +1,9 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\PersistenceManager;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\PersistenceManager;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceManagerInterface;
-use ENC\Bundle\ApplicationServiceAbstractBundle\Test\PersistenceManager\TestConnection;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Tests\PersistenceManager\TestConnection;
 
 class TestPersistenceManager implements PersistenceManagerInterface
 {

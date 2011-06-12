@@ -1,6 +1,6 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -17,7 +17,7 @@ class TestApplicationServiceWithRandomID extends ApplicationService
     
     public function getFullEntityClass()
     {
-        return 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\Entity\TestEntity';
+        return 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity\TestEntity';
     }
     
     public function bindDataToObject(array $data, $object)

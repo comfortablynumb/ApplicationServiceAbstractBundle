@@ -1,14 +1,14 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationService;
 
-class TestApplicationService extends ApplicationService
+class TestApplicationService2 extends ApplicationService
 {
 	public function getFullEntityClass()
 	{
-		return 'ENC\Bundle\ApplicationServiceAbstractBundle\Test\Entity\TestEntity';
+		return 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity\TestEntity';
 	}
 	
 	public function bindDataToObject( array $data, $object )
@@ -18,12 +18,12 @@ class TestApplicationService extends ApplicationService
     
     public function getAliasForDql()
     {
-        return 'a';
+        return 'b';
     }
 	
 	public function getID()
 	{
-		return 'test_service';
+		return 'test_service2';
 	}
 	
 	public function getDefaultOrderByColumn()

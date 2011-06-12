@@ -1,6 +1,6 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\ApplicationService;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService;
 
 class TestQuery
 {

@@ -1,27 +1,30 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test\Entity;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity;
+
+use Doctrine\ORM\Mapping AS ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @Entity
+ * @ORM\Entity
  */
 class TestEntity
 {
 	/**
-	 * @Id
-	 * @Column(type="integer")
-	 * @GeneratedValue(strategy="IDENTITY")
+	 * @ORM\Id
+	 * @ORM\Column(type="integer")
+	 * @ORM\GeneratedValue(strategy="IDENTITY")
 	 */
 	private $id;
 	
 	/**
-	 * @Column(type="string")
-	 * @validation:NotBlank
+	 * @ORM\Column(type="string")
+	 * @Assert\NotBlank
 	 */
 	private $name;
 	
 	/**
-	 * @Version
+	 * @ORM\Version
 	 */
 	private $version;
 	
