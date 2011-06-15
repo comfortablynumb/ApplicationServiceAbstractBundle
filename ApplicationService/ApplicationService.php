@@ -440,18 +440,21 @@ abstract class ApplicationService implements ApplicationServiceInterface
         try {
             $data = array('id' => $id);
             
-            // Notificamos el evento pre_find
             $this->notifyPreFindEvent($data, $qb);
         
-            $lockMode = $this->getEquivalentConcurrencyLockTypeOfPersistenceManager($lockMode);
+            $lockMode = !is_null($lockMode) ? $this->getEquivalentConcurrencyLockTypeOfPersistenceManager($lockMode) : $lockMode;
             $result = $this->doFindByPrimaryKey($id, $lockMode, $lockVersion);
         
             $response->setIsSuccess(true);
             $response->setSuccessMessage('La operacion se ejecuto correctamente.');
-            $response->setRow($result);
+            $response->setRowObject($result);
             
-            // Notificamos el evento post_find
-            $this->notifyPostFindEvent($data, $result);
+            // [TODO] FIX THIS. READ BELOW
+            $response->setRow(array());
+            
+            // [TODO] FIX SECOND ARGUMENT. IT MUST BE AN ARRAY WITH THE DATA OF THE OBJECT RETRIEVED
+            // BUT THE ACTUAL RESULT IS AN OBJECT
+            $this->notifyPostFindEvent($data, array());
         } catch (\Exception $e) {
             $this->handleException($e);
         }
