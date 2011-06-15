@@ -647,9 +647,14 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $request        = $this->getServiceRequest();
         $dataIndex      = $this->getRequestDataIndexForEntity();
         $requestData    = $request->getDataFromIndex( $dataIndex );
-        $data           = is_null( $requestData ) ? array() : $requestData;
+        $data           = is_null($requestData) ? array() : $requestData;
+        $files          = $request->getFiles();
         
-        return $this->create( $data );
+        if ($files->has($dataIndex)) {
+            $data = array_merge($data, $files->get($dataIndex));
+        }
+        
+        return $this->create($data);
     }
     
     public function update( array $data, $lockMode = null, $lockVersion = null )
@@ -687,7 +692,11 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $request        = $this->getServiceRequest();
         $dataIndex      = $this->getRequestDataIndexForEntity();
         $requestData    = $request->getDataFromIndex( $dataIndex );
-        $data           = is_null( $requestData ) ? array() : $requestData;
+        $files          = $request->getFiles();
+        
+        if ($files->has($dataIndex)) {
+            $data = array_merge($data, $files->get($dataIndex));
+        }
         
         return $this->update( $data );
     }
