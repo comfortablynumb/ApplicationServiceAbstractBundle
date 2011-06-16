@@ -647,11 +647,11 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function createFromRequest()
     {
-        $request        = $this->getServiceRequest();
-        $dataIndex      = $this->getRequestDataIndexForEntity();
-        $requestData    = $request->getDataFromIndex( $dataIndex );
-        $data           = is_null($requestData) ? array() : $requestData;
-        $files          = $request->getFiles();
+        $request = $this->getServiceRequest();
+        $dataIndex = $this->getRequestDataIndexForEntity();
+        $requestData = $request->getDataFromIndex($dataIndex);
+        $data = is_null($requestData) ? array() : $requestData;
+        $files = $request->getFiles();
         
         if ($files->has($dataIndex)) {
             $data = array_merge($data, $files->get($dataIndex));
@@ -660,7 +660,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $this->create($data);
     }
     
-    public function update( array $data, $lockMode = null, $lockVersion = null )
+    public function update(array $data, $lockMode = null, $lockVersion = null)
     {
         $response       = $this->getServiceResponse();
         
@@ -692,10 +692,11 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function updateFromRequest()
     {
-        $request        = $this->getServiceRequest();
-        $dataIndex      = $this->getRequestDataIndexForEntity();
-        $requestData    = $request->getDataFromIndex( $dataIndex );
-        $files          = $request->getFiles();
+        $request = $this->getServiceRequest();
+        $dataIndex = $this->getRequestDataIndexForEntity();
+        $requestData = $request->getDataFromIndex($dataIndex);
+        $data = is_null($requestData) ? array() : $requestData;
+        $files = $request->getFiles();
         
         if ($files->has($dataIndex)) {
             $data = array_merge($data, $files->get($dataIndex));
