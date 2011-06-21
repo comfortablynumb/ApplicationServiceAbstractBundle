@@ -30,7 +30,7 @@ class ApplicationServiceResponseArrayEscapedData extends ApplicationServiceRespo
             if (is_array($value)) {
                 $array[$key] = $this->escapeDataInArray($value);
             } else if (!is_numeric($value)) {
-                $array[$key] = htmlentities($value, ENT_QUOTES, 'UTF-8');
+                $array[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
             }
         }
         
