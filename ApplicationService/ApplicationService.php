@@ -417,7 +417,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $response->setErrorType($exception->getType());
             $response->setErrorMessage('Application has thrown an unknown error.');
             
-            $this->getLogger()->err($e->getMessage());
+            $this->getLogger()->err('[ApplicationService] Unknown Exception: '.$e->getMessage());
         }
         
         // Notificamos el evento

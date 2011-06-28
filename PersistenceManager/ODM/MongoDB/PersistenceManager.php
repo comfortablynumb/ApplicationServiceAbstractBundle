@@ -31,7 +31,6 @@ class PersistenceManager extends PersistenceManagerAbstract
 
     public function lock($object, $lockMode, $lockVersion)
     {
-
     }
 
     public function beginTransaction()

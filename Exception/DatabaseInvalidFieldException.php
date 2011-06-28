@@ -4,7 +4,7 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExceptionInterface;
 
-class DatabaseInvalidFieldException extends \Exception implements ApplicationServiceExceptionInterface
+class DatabaseInvalidFieldException extends DatabaseException
 {
     public function getFriendlyMessage()
     {

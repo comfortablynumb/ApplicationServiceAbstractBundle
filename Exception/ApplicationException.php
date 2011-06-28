@@ -4,15 +4,15 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExceptionInterface;
 
-class ApplicationAccessDeniedException extends ApplicationException
+class ApplicationException extends BaseException
 {
     public function getFriendlyMessage()
     {
-        return 'Usted no posee los permisos requeridos para ejecutar la acción solicitada.';
+        return 'Ocurrio un error en la aplicación.';
     }
     
     public function getType()
     {
-        return 'ApplicationAccessDeniedException';
+        return 'ApplicationException';
     }
 }

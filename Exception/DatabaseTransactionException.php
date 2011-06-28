@@ -4,7 +4,7 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExceptionInterface;
 
-class DatabaseTransactionException extends \Exception implements ApplicationServiceExceptionInterface
+class DatabaseTransactionException extends DatabaseException
 {
     public function getFriendlyMessage()
     {

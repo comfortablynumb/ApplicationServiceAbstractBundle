@@ -6,7 +6,7 @@ use Symfony\Component\Validator\ConstraintViolationList;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExceptionInterface;
 
-class ApplicationInvalidDataException extends \Exception implements ApplicationServiceExceptionInterface
+class ApplicationInvalidDataException extends ApplicationException
 {
     protected $errorList;
     protected $entity;

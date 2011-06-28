@@ -4,7 +4,7 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationServiceExceptionInterface;
 
-class ApplicationMissingIDException extends \Exception implements ApplicationServiceExceptionInterface
+class ApplicationMissingIDException extends ApplicationException
 {
     public function getFriendlyMessage()
     {
