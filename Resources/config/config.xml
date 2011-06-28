@@ -5,8 +5,9 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
+        <parameter key="application_service_abstract.service.class">ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationService</parameter>
         <parameter key="application_service_abstract.request.class">ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestBase</parameter>
-        <parameter key="application_service_abstract.response.class">ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseJSONEscapedData</parameter>
+        <parameter key="application_service_abstract.response.class">ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseArray</parameter>
         <parameter key="application_service_abstract.event_dispatcher.class">Symfony\Component\EventDispatcher\EventDispatcher</parameter>
         <parameter key="application_service_abstract.acl_manager.class">ENC\Bundle\ApplicationServiceAbstractBundle\AclManager\AclManager</parameter>
         <parameter key="application_service_abstract.validation_errors_formatter.class">ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatter</parameter>
@@ -15,6 +16,11 @@
     </parameters>
 
     <services>
+        <service id="application_service_abstract.service" class="application_service_abstract.service.class" abstract="true">
+            <argument type="service" id="service_container" />
+            <argument type="collection"></argument>
+        </service>
+        
         <service id="application_service_abstract.request" class="%application_service_abstract.request.class%" />
 
         <service id="application_service_abstract.response" class="%application_service_abstract.response.class%" />

@@ -13,6 +13,7 @@ use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Log\LoggerInterface;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceResponse\ApplicationServiceResponseInterface;
@@ -44,6 +45,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $validator                    = null;
     protected $dispatcher                   = null;
     protected $session                      = null;
+    protected $logger                       = null;
     protected $concurrencyLockType          = self::CONCURRENCY_LOCK_NONE;
     protected $repository                   = null;
     protected $services                     = array();
@@ -71,18 +73,10 @@ abstract class ApplicationService implements ApplicationServiceInterface
 
         $this->setServiceRequest($request);
         $this->setServiceResponse($container->get('application_service_abstract.response'));
-        $this->setPersistenceManager($container->get('application_service_abstract.persistence_manager.orm'));
         $this->setValidator($container->get('validator'));
         $this->setDispatcher($container->get('application_service_abstract.event_dispatcher'));
         $this->setSession($container->get('session'));
-
-        if ($this->getFullEntityClass()) {
-            $this->setRepository($this->getPersistenceManager()->getRepository($this->getFullEntityClass()));
-            
-            $metadata = $this->getPersistenceManager()->getClassMetadata($this->getFullEntityClass());
-            $this->setEntityClassMetadata($metadata);
-        }
-
+        $this->setLogger($container->get('logger'));
         $this->setAclManager($container->get('application_service_abstract.acl_manager'));
         $this->setPermissions(array(
             self::PERMISSIONS_CREATE,
@@ -92,7 +86,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
             self::PERMISSIONS_MASTER
         ));
         $this->setValidationErrorsFormatter($container->get('application_service_abstract.validation_errors_formatter'));
-
+        $this->setConcurrencyLockType(self::CONCURRENCY_LOCK_NONE);
+        
         if (!empty($services)) {
             $this->setServices($services);
         }
@@ -151,6 +146,13 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function setPersistenceManager(PersistenceManagerInterface $persistenceManager)
     {
         $this->persistenceManager = $persistenceManager;
+        
+        if ($this->getFullEntityClass()) {
+            $this->setRepository($persistenceManager->getRepository($this->getFullEntityClass()));
+            
+            $metadata = $persistenceManager->getClassMetadata($this->getFullEntityClass());
+            $this->setEntityClassMetadata($metadata);
+        }
     }
     
     public function getPersistenceManager()
@@ -216,6 +218,16 @@ abstract class ApplicationService implements ApplicationServiceInterface
     public function setSession($session)
     {
         $this->session = $session;
+    }
+    
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+    
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
     
     public function getSecurityContext()
@@ -403,7 +415,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $exception = new Exception\ApplicationUnknownException($e->getMessage(), 0, $e);
             
             $response->setErrorType($exception->getType());
-            $response->setErrorMessage($exception->getMessage());
+            $response->setErrorMessage('Application has thrown an unknown error.');
+            
+            $this->getLogger()->err($e->getMessage());
         }
         
         // Notificamos el evento
