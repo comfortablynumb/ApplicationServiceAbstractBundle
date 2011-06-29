@@ -422,7 +422,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->notifyExceptionEvent($e);
         
         // Log Exception
-        $this->getLogger()->err($this->getLogFormatter()->process($this->getServiceRequest(), $e, get_class($this)));
+        $this->getLogger()->err($this->getLogFormatter()->process($this, $e));
         
         if ($this->isSubService()) {
             $e = new Exception\SubServiceException('', 0, $e, $this->getServiceResponse());

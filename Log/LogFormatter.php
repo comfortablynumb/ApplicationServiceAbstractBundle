@@ -2,27 +2,28 @@
 
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\Log;
 
-use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\ApplicationServiceRequestInterface;
+use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationServiceInterface;
 
-class Formatter
+class LogFormatter
 {
     const END_LINE = '------------------------------------------------------------';
     const LEFT_PADDING = '    ';
     
-    public function process(ApplicationServiceRequestInterface $request, \Exception $e, $serviceClass = '')
+    public function process(ApplicationServiceInterface $service, \Exception $e, array $arguments = array())
     {
+        $request = $service->getServiceRequest();
         $requestContent = $this->formatRequestContent($request);
         
         $msg = sprintf('%s'.PHP_EOL.self::LEFT_PADDING.'[Service Class] %s'.PHP_EOL.self::LEFT_PADDING.'[Ip Address] %s'.PHP_EOL.
-            self::LEFT_PADDING.'[URL] %s'.PHP_EOL.self::LEFT_PADDING.'[HTTP Method] %s'.PHP_EOL.self::LEFT_PADDING.'[Exception Class] %s'.PHP_EOL.
+            self::LEFT_PADDING.'[HTTP Method] %s'.PHP_EOL.self::LEFT_PADDING.'[URL] %s'.PHP_EOL.PHP_EOL.self::LEFT_PADDING.'[Exception Class] %s'.PHP_EOL.
             self::LEFT_PADDING.'[Exception Trace] %s'.PHP_EOL.self::LEFT_PADDING.'[Script Name] %s'.PHP_EOL.self::LEFT_PADDING.'[Request Raw] %s'.PHP_EOL.self::END_LINE.PHP_EOL,
             $e->getMessage(),
-            $serviceClass,
+            get_class($service),
             $request->getClientIp(),
             $request->getMethod(),
             $request->getUri(),
             get_class($e),
-            $this->formatTrace($e),
+            $this->formatExceptionTrace($e),
             $request->getScriptName(),
             $requestContent);
         
@@ -35,13 +36,13 @@ class Formatter
         $content = PHP_EOL.$padding.sprintf('%s %s %s', $request->getMethod(), $request->getRequestUri(), $request->getServer()->get('SERVER_PROTOCOL')).PHP_EOL;
         
         foreach ($request->getHeaders()->all() as $key => $value) {
-            $content .= $padding.$key.': '.$value.PHP_EOL;
+            $content .= $padding.$key.': '.(is_array($value) && !empty($value) ? $value[0] : $value).PHP_EOL;
         }
         
         return $content;
     }
     
-    protected function formatTrace(\Exception $e) 
+    protected function formatExceptionTrace(\Exception $e) 
     {
         $trace = $e->getTrace();
         $result = "\n";
@@ -54,7 +55,7 @@ class Formatter
                 $counter++,
                 isset($item['file']) ? $item['file'] : '',
                 isset($item['function']) ? $item['function'] : '',
-                isset($item['args']) ? $this->formatTraceMethodArguments($item['args']) : '',
+                isset($item['args']) ? $this->formatExceptionTraceMethodArguments($item['args']) : '',
                 isset($item['line']) ? $item['line'] : '');
             $result .= PHP_EOL;
         }
@@ -62,7 +63,7 @@ class Formatter
         return $result;
     }
     
-    protected function formatTraceMethodArguments(array $args) 
+    protected function formatExceptionTraceMethodArguments(array $args) 
     {
         $result = '';
         
