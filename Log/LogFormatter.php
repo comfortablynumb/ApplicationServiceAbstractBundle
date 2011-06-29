@@ -50,7 +50,7 @@ class LogFormatter
         $counter = 1;
         
         foreach ($trace as $index => $item) {
-            $result .= sprintf('%s (%d) File: %s => %s (%s) (Line %s)',
+            $result .= sprintf('%s(%d) File: %s => %s (%s) (Line %s)',
                 $padding, 
                 $counter++,
                 isset($item['file']) ? $item['file'] : '',
