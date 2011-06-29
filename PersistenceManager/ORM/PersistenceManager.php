@@ -18,6 +18,11 @@ class PersistenceManager extends PersistenceManagerAbstract
     {
         $this->pm = $entityManager;
     }
+    
+    public function createQuery($dql)
+    {
+        return $this->pm->createQuery($dql);
+    }
 
     public function createQueryBuilder($document = null)
     {
