@@ -46,6 +46,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     protected $dispatcher                   = null;
     protected $session                      = null;
     protected $logger                       = null;
+    protected $logFormatter                 = null;
     protected $concurrencyLockType          = self::CONCURRENCY_LOCK_NONE;
     protected $repository                   = null;
     protected $services                     = array();
@@ -77,6 +78,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->setDispatcher($container->get('application_service_abstract.event_dispatcher'));
         $this->setSession($container->get('session'));
         $this->setLogger($container->get('logger'));
+        $this->setLogFormatter($container->get('application_service_abstract.log_formatter'));
         $this->setAclManager($container->get('application_service_abstract.acl_manager'));
         $this->setPermissions(array(
             self::PERMISSIONS_CREATE,
@@ -230,6 +232,16 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->logger = $logger;
     }
     
+    public function getLogFormatter()
+    {
+        return $this->logFormatter;
+    }
+    
+    public function setLogFormatter($logFormatter)
+    {
+        $this->logFormatter = $logFormatter;
+    }
+    
     public function getSecurityContext()
     {
         return $this->getContainer()->get('security.context');
@@ -360,18 +372,6 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $object;
     }
 
-    /**
-     * Method to handle exceptions in a generic fashion without having 
-     * to include this logic in every service you create. If you want 
-     * to customize the array of errors, just implement
-     * ValidatorErrorsFormatterInterface
-     *
-     * @param \Exception The exception
-     * @param mixed The object
-     * @param array The array with the results of the execution of the service
-     *
-     * @return array The same array with the results, but with a msg, error type and list of errors added
-     */
     public function handleException(\Exception $e)
     {
         $response = $this->getServiceResponse();
@@ -416,12 +416,13 @@ abstract class ApplicationService implements ApplicationServiceInterface
             
             $response->setErrorType($exception->getType());
             $response->setErrorMessage('Application has thrown an unknown error.');
-            
-            $this->getLogger()->err('[ApplicationService] Unknown Exception: '.$e->getMessage());
         }
         
-        // Notificamos el evento
+        // Notify Event
         $this->notifyExceptionEvent($e);
+        
+        // Log Exception
+        $this->getLogger()->err($this->getLogFormatter()->process($this->getServiceRequest(), $e, get_class($this)));
         
         if ($this->isSubService()) {
             $e = new Exception\SubServiceException('', 0, $e, $this->getServiceResponse());

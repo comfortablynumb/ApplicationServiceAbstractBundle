@@ -45,4 +45,34 @@ abstract class ApplicationServiceRequest implements ApplicationServiceRequestInt
     {
         return $this->getRequest()->files;
     }
+    
+    public function getClientIp()
+    {
+        return $this->getRequest()->getClientIp();
+    }
+    
+    public function getUri()
+    {
+        return $this->getRequest()->getUri();
+    }
+    
+    public function getMethod()
+    {
+        return $this->getRequest()->getMethod();
+    }
+    
+    public function isXmlHttpRequest()
+    {
+        return $this->getRequest()->isXmlHttpRequest();
+    }
+    
+    public function getScriptName()
+    {
+        return $this->getRequest()->getScriptName();
+    }
+    
+    public function __toString()
+    {
+        return $this->getRequest()->__toString();
+    }
 }

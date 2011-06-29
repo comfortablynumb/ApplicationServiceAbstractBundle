@@ -70,6 +70,13 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('class')->end()
                 ->end()
             ->end()
+            
+            ->arrayNode('log_formatter')
+                ->canBeUnset()
+                ->children()
+                    ->scalarNode('class')->end()
+                ->end()
+            ->end()
         ;
 
         return $treeBuilder;

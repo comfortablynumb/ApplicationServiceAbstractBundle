@@ -13,6 +13,7 @@
         <parameter key="application_service_abstract.validation_errors_formatter.class">ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatter</parameter>
         <parameter key="application_service_abstract.persistence_manager.orm.class">ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\ORM\PersistenceManager</parameter>
         <parameter key="application_service_abstract.persistence_manager.odm.mongodb.class">ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\ODM\MongoDB\PersistenceManager</parameter>
+        <parameter key="application_service_abstract.log_formatter.class">ENC\Bundle\ApplicationServiceAbstractBundle\Log\Formatter</parameter>
     </parameters>
 
     <services>
@@ -40,5 +41,7 @@
         <service id="application_service_abstract.persistence_manager.odm.mongodb" class="%application_service_abstract.persistence_manager.odm.mongodb.class%">
             <argument type="service" id="doctrine.odm.mongodb.default_document_manager" />
         </service>
+        
+        <service id="application_service_abstract.log_formatter" class="%application_service_abstract.log_formatter.class%" />
     </services>
 </container>

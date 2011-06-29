@@ -52,6 +52,10 @@ class ApplicationServiceAbstractExtension extends Extension
         if (isset($config['validation_errors_formatter'])) {
             $this->registerValidationErrorsFormatterConfiguration($config['validation_errors_formatter'], $container);
         }
+        
+        if (isset($config['log_formatter'])) {
+            $this->registerValidationErrorsFormatterConfiguration($config['log_formatter'], $container);
+        }
     }
     
     public function registerConcurrencyLockTypeConfiguration($concurrencyLockType, ContainerBuilder $container)
@@ -87,6 +91,13 @@ class ApplicationServiceAbstractExtension extends Extension
     {
         if (isset($config['class'])) {
             $container->setParameter('application_service_abstract.validation_errors_formatter.class', $config['class']);
+        }
+    }
+    
+    public function registerLogFormatterConfiguration(array $config, ContainerBuilder $container)
+    {
+        if (isset($config['class'])) {
+            $container->setParameter('application_service_abstract.log_formatter.class', $config['class']);
         }
     }
     
