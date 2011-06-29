@@ -8,7 +8,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationServiceRequest\Applic
 
 abstract class ApplicationServiceRequest implements ApplicationServiceRequestInterface
 {
-    private $request;
+    protected $request;
     
     public function __construct(Request $request = null)
     {
@@ -28,6 +28,16 @@ abstract class ApplicationServiceRequest implements ApplicationServiceRequestInt
     protected function getParameterBag()
     {
         return $this->getRequest()->getMethod() == 'GET' ? $this->getRequest()->query : $this->getRequest()->request;
+    }
+    
+    public function getHeaders()
+    {
+        return $this->getRequest()->headers;
+    }
+    
+    public function getServer()
+    {
+        return $this->getRequest()->server;
     }
 
     public function getDataFromIndex($index)
@@ -56,6 +66,11 @@ abstract class ApplicationServiceRequest implements ApplicationServiceRequestInt
         return $this->getRequest()->getUri();
     }
     
+    public function getRequestUri()
+    {
+        return $this->getRequest()->getRequestUri();
+    }
+    
     public function getMethod()
     {
         return $this->getRequest()->getMethod();
@@ -69,6 +84,11 @@ abstract class ApplicationServiceRequest implements ApplicationServiceRequestInt
     public function getScriptName()
     {
         return $this->getRequest()->getScriptName();
+    }
+    
+    public function getContent()
+    {
+        return $this->getRequest()->getContent();
     }
     
     public function __toString()
