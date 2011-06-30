@@ -4,7 +4,7 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Log;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationServiceInterface;
 
-class LogFormatter
+class LogFormatter implements LogFormatterInterface
 {
     const END_LINE = '------------------------------------------------------------';
     const LEFT_PADDING = '    ';

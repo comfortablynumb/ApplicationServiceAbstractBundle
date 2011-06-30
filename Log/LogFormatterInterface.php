@@ -6,5 +6,5 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationSe
 
 interface LogFormatterInterface
 {
-    public function process(ApplicationServiceInterface $service, \Exception $e, array $arguments = array);
+    public function process(ApplicationServiceInterface $service, \Exception $e, array $arguments = array());
 }
