@@ -875,6 +875,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $this->notifyPreCommitEvent( $action, $data, $object );
             
             $pm->commitTransaction();
+            
+            $this->notifyPostCommitEvent( $action, $data, $object );
         }
         catch ( \Exception $e )
         {
@@ -909,6 +911,8 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $this->notifyPreCommitEvent( 'remove', array(), $object );
             
             $pm->commitTransaction();
+            
+            $this->notifyPostCommitEvent( $action, $data, $object );
         }
         catch ( \Exception $e )
         {
