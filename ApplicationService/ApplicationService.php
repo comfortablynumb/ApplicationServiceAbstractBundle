@@ -415,7 +415,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $exception = new Exception\ApplicationUnknownException($e->getMessage(), 0, $e);
             
             $response->setErrorType($exception->getType());
-            $response->setErrorMessage('Application has thrown an unknown error.');
+            $response->setErrorMessage('Se ha producido un error desconocido en la aplicación.');
         }
         
         // Notify Event
