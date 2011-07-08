@@ -18,8 +18,8 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\PersistenceManager\PersistenceMa
 interface ApplicationServiceInterface
 {
     public function addService( ApplicationServiceInterface $service );
-    public function bindDataToObject( array $data, $object );
-    public function bindDataToObjectAndValidate( array $data, $object );
+    public function bindDataToObject(array $data, $object, $isNew);
+    public function bindDataToObjectAndValidate(array $data, $object, $isNew);
     public function concurrencyLockIsEnabled();
     public function concurrencyLockIsOptimistic();
     public function concurrencyLockIsPessimisticRead();

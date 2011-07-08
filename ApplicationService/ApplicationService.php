@@ -22,6 +22,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Event;
 use ENC\Bundle\ApplicationServiceAbstractBundle\FinderQueryBuilder;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatterInterface;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Data\DataHolder;
 
 abstract class ApplicationService implements ApplicationServiceInterface
 {
@@ -346,14 +347,14 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $object;
     }
 
-    public function bindDataToObjectAndValidate(array $data, $object)
+    public function bindDataToObjectAndValidate(array $data, $object, $isNew)
     {
         // Data Binding
-        $this->notifyPreDataBindingEvent($data, $object);
+        $this->notifyPreDataBindingEvent($data, $object, $isNew);
 
-        $object = $this->bindDataToObject($data, $object);
+        $object = $this->bindDataToObject($data, $object, $isNew);
 
-        $this->notifyPostDataBindingEvent($data, $object);
+        $this->notifyPostDataBindingEvent($data, $object, $isNew);
 
         // Data Validation
         $this->notifyPreDataValidationEvent($object);
@@ -365,7 +366,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         return $object;
     }
     
-    public function bindDataToObject( array $data, $object )
+    public function bindDataToObject(array $data, $object, $isNew)
     {
         $this->validateObjectIsAnInstanceOfEntityClass( $object );
         
@@ -455,8 +456,10 @@ abstract class ApplicationService implements ApplicationServiceInterface
         try {
             $data = array('id' => $id);
             
-            $this->notifyPreFindEvent($data, $qb);
-        
+            $dataHolder = new DataHolder($data);
+            $this->notifyPreFindEvent($dataHolder, $qb);
+            $data = $dataHolder->getData();
+            
             $lockMode = !is_null($lockMode) ? $this->getEquivalentConcurrencyLockTypeOfPersistenceManager($lockMode) : $lockMode;
             $result = $this->doFindByPrimaryKey($id, $lockMode, $lockVersion);
         
@@ -483,7 +486,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
         
         try {
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent($filters, $qb);
+            $dataHolder = new DataHolder($filters);
+            $this->notifyPreFindEvent($dataHolder, $qb);
+            $filters = $dataHolder->getData();
             
             $request = $this->getServiceRequest();
             $filters = !empty( $filters ) ? $filters : $request->getFilters();
@@ -526,7 +531,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
         
         try {
             // Notificamos el evento pre_find
-            $this->notifyPreFindEvent($filters, $qb);
+            $dataHolder = new DataHolder($filters);
+            $this->notifyPreFindEvent($dataHolder, $qb);
+            $data = $dataHolder->getData();
             
             $repository = $this->getRepository();
             $rows = $this->doFind($filters, $start, $limit, $orderBy, $orderType, false, $qb);
@@ -685,7 +692,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
             $entity     = $this->getRepository()->find( $id, $lockMode, $lockVersion );
             
             // Notificamos el evento pre_update
-            $this->notifyPreUpdateEvent( $data, $entity );
+            $dataHolder = new DataHolder($data);
+            $this->notifyPreUpdateEvent($dataHolder, $entity);
+            $data = $dataHolder->getData();
             
             $this->doSave( $data, $entity, $lockMode, $lockVersion );
             
@@ -852,7 +861,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
                 $this->getConcurrencyLock( $object, $lockMode, $lockVersion );
             }
             
-            $object = $this->bindDataToObjectAndValidate( $data, $object );
+            $object = $this->bindDataToObjectAndValidate($data, $object, !$pm->contains($object));
             
             // Notificamos el evento "pre_commit"
             //
@@ -1177,7 +1186,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
     }
     
     // Global event notifiers
-    public function notifyPreFindEvent(array $data, $qb = null)
+    public function notifyPreFindEvent(DataHolder $data, $qb = null)
     {
         $event = new Event\PreFindEvent($this, $data, $qb);
         $this->getDispatcher()->dispatch(Event\Event::PRE_FIND, $event);
@@ -1201,7 +1210,7 @@ abstract class ApplicationService implements ApplicationServiceInterface
         $this->getDispatcher()->dispatch(Event\Event::POST_CREATE, $event);
     }
     
-    public function notifyPreUpdateEvent(array $data, $entity)
+    public function notifyPreUpdateEvent(DataHolder $data, $entity)
     {
         $event = new Event\PreUpdateEvent($this, $data, $entity);
         $this->getDispatcher()->dispatch(Event\Event::PRE_UPDATE, $event);

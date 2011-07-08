@@ -3,13 +3,14 @@
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\Event;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationServiceInterface;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Data\DataHolder;
 
 class PreFindEvent extends Event
 {
     protected $data;
     protected $qb;
     
-    public function __construct(ApplicationServiceInterface $service, array $data, $qb = null)
+    public function __construct(ApplicationServiceInterface $service, DataHolder $data, $qb = null)
     {
         parent::__construct($service);
 
@@ -22,7 +23,7 @@ class PreFindEvent extends Event
         return $this->data;
     }
 
-    public function setData(array $data)
+    public function setData(DataHolder $data)
     {
         $this->data = $data;
     }

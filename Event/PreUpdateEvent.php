@@ -3,13 +3,14 @@
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\Event;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService\ApplicationServiceInterface;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Data\DataHolder;
 
 class PreUpdateEvent extends Event
 {
     protected $data;
     protected $entity;
     
-    public function __construct(ApplicationServiceInterface $service, array $data, $entity)
+    public function __construct(ApplicationServiceInterface $service, DataHolder $data, $entity)
     {
         parent::__construct($service);
 
@@ -22,7 +23,7 @@ class PreUpdateEvent extends Event
         return $this->data;
     }
 
-    public function setData(array $data)
+    public function setData(DataHolder $data)
     {
         $this->data = $data;
     }
