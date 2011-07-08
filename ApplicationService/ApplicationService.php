@@ -1394,6 +1394,21 @@ abstract class ApplicationService implements ApplicationServiceInterface
             );
         }
     }
+    
+    public function getBooleanValueFromString($stringValue)
+    {
+        $stringValue = (string) $stringValue;
+        
+        switch ($stringValue) {
+            case 'yes':
+            case '1':
+            case 'on':
+            case 'true':
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public function getAliasForDql()
     {
