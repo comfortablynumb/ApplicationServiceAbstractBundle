@@ -1409,6 +1409,11 @@ abstract class ApplicationService implements ApplicationServiceInterface
                 return false;
         }
     }
+    
+    public function refreshEntity($entity)
+    {
+        $this->getPersistenceManager()->refresh($entity);
+    }
 
     public function getAliasForDql()
     {

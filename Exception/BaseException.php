@@ -13,6 +13,6 @@ class BaseException extends \Exception implements ApplicationServiceExceptionInt
     
     public function getType()
     {
-        return 'BaseException';
+        return get_class($this);
     }
 }
