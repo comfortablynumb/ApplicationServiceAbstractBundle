@@ -3,6 +3,7 @@
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Factory\TestApplicationServiceFactory;
 
 class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 {
@@ -15,11 +16,18 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     const EXCEPTION_INVALID_DATA = 'ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationInvalidDataException';
     const EXCEPTION_SUB_SERVICE = 'ENC\Bundle\ApplicationServiceAbstractBundle\Exception\SubServiceException';
-
+    
+    protected $factory;
+    
+    public function setUp()
+    {
+        $this->factory = new TestApplicationServiceFactory();
+    }
+    
     public function test_isValidService_returnsTrueIfItsAValidApplicationService()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS2);
 
         $this->assertTrue($service->isValidService($service2));
         $this->assertFalse($service->isValidService(new \DateTime()));
@@ -30,7 +38,7 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
      */
     public function test_addService_doesntLetAddAServiceToItself()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
 
         $service->addService($service);
     }    
@@ -40,8 +48,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
      */
     public function test_addService_doesntLetAddAServiceToAnotherServiceThatAlreadyHasIt()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS2);
 
         $service->addService($service2);
         $service->addService($service2);
@@ -49,8 +57,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_addService_whenAddingAServiceToAnotherServiceItsMarkedAsSubservice()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS2);
 
         $service->addService($service2);
 
@@ -66,15 +74,15 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
      */
     public function test_getService_throwsExceptionIfServiceDoesntExist()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
 
         $service->getService('non_existent_service');
     }
     
     public function test_getService_returnsServiceRequested()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS2);
 
         $service->addService($service2);
 
@@ -85,8 +93,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
     
     public function test_setService_setsACopyOfTheServiceAndSetsItAsASubService()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS2);
 
         $service->addService($service2);
 
@@ -99,11 +107,11 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_getServices_returnsServicesAddedToMainService()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
         $subServicesArray = array(
-            TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2),
-            TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID),
-            TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID)
+            $this->factory->create(self::TEST_SERVICE_CLASS2),
+            $this->factory->create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID),
+            $this->factory->create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID)
         );
 
         $service->addService($subServicesArray[0]);
@@ -119,8 +127,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
     
     public function test_hasService_returnsTrueIfAServiceHasAnotherServiceOrFalseOtherwise()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS2);
 
         $service->addService($service2);
         
@@ -130,13 +138,13 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_setServices_setServicesCorrectly()
     {
-        $service = TestApplicationServiceFactory::create();
-        $service2 = TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID);
+        $service = $this->factory->create();
+        $service2 = $this->factory->create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID);
 
         $subServicesArray = array(
-            TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS2),
-            TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID),
-            TestApplicationServiceFactory::create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID)
+            $this->factory->create(self::TEST_SERVICE_CLASS2),
+            $this->factory->create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID),
+            $this->factory->create(self::TEST_SERVICE_CLASS_WITH_RANDOM_ID)
         );
 
         $service->setServices($subServicesArray);
@@ -159,7 +167,7 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
      */
     public function test_setServices_settingIncorrectServiceThrowsException()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
         
         $subServicesArray[] = 'InvalidService';
         
@@ -168,10 +176,10 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_formatErrorsFromList_callsFormatMethodOfValidationErrorsFormatterInterfaceObject()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
         $formatterMock = $service->getValidationErrorsFormatter();
         $object = new \DateTime();
-        $errorsList = TestApplicationServiceFactory::getConstraintViolationListMock();
+        $errorsList = $this->factory->getConstraintViolationListMock();
         $formatForFieldName = 'entity';
 
         $formatterMock->expects($this->once())
@@ -183,11 +191,11 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_validateObject_callsValidatorsValidateMethodInternally()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
         $validator = $service->getValidator();
         $entityClass = self::TEST_ENTITY; 
         $entity = new $entityClass;
-        $constraintViolationList = TestApplicationServiceFactory::getConstraintViolationListMock();
+        $constraintViolationList = $this->factory->getConstraintViolationListMock();
 
         $constraintViolationList->expects($this->once())
             ->method('count')
@@ -203,11 +211,11 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_validateObject_callsValidatorsValidateMethodInternallyAndThrowsApplicationInvalidDataExceptionInCaseOfErrors()
     {
-        $service = TestApplicationServiceFactory::create();
-        $validator = TestApplicationServiceFactory::getValidatorMock();
+        $service = $this->factory->create();
+        $validator = $this->factory->getValidatorMock();
         $entityClass = self::TEST_ENTITY; 
         $entity = new $entityClass;
-        $constraintViolationList = TestApplicationServiceFactory::getConstraintViolationListMock();
+        $constraintViolationList = $this->factory->getConstraintViolationListMock();
 
         $constraintViolationList->expects($this->once())
             ->method('count')
@@ -238,7 +246,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
         $data = array( 'field' => 'value' );
         $object = new \DateTime();
 
-        $serviceMock = TestApplicationServiceFactory::createMock($methodsToMock, array(), true);
+        $serviceMock = $this->factory->createMock($methodsToMock);
+        $serviceMock->setDispatcher($this->factory->getDispatcherMock());
 
         $serviceMock->expects($this->once())
             ->method('notifyPreDataBindingEvent')
@@ -261,12 +270,12 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
             ->method('notifyPostDataValidationEvent')
             ->with($this->equalTo($object));
 
-        $serviceMock->bindDataToObjectAndValidate($data, $object);
+        $serviceMock->bindDataToObjectAndValidate($data, $object, true);
     }
 
     public function test_handleException_ApplicationServiceExceptionInterfaceHandling()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
 
         $e = new Exception\ApplicationGeneralException('App Error');
 
@@ -281,7 +290,7 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_handleException_UnknownExceptionInterfaceHandling()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
         $e = new \InvalidArgumentException('App Error');
 
         $service->handleException($e);
@@ -290,13 +299,12 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFalse($response->isSuccess());
         $this->assertEquals($response->getErrorType(), 'ApplicationUnknownException');
-        $this->assertEquals($response->getErrorMessage(), $e->getMessage());
     }
 
     public function test_handleException_SubServiceExceptionWithPreviousNonApplicationServiceExceptionInterface()
     {
-        $service = TestApplicationServiceFactory::create();
-        $response = TestApplicationServiceFactory::getResponse();
+        $service = $this->factory->create();
+        $response = $this->factory->getResponse();
         
         // If it's a SubServiceException and it has a previous non ApplicationServiceExceptionInterface exception
         // then the response then should have an error type of ApplicationUnknownException
@@ -313,8 +321,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
     
     public function test_handleException_SubServiceExceptionWithPreviousApplicationServiceExceptionInterface()
     {
-        $service = TestApplicationServiceFactory::create();
-        $response = TestApplicationServiceFactory::getResponse();
+        $service = $this->factory->create();
+        $response = $this->factory->getResponse();
         
         // If it's a SubServiceException and it has a previous ApplicationServiceExceptionInterface exception
         // then the response then should have the error type of the previous exception
@@ -331,8 +339,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
     
     public function test_handleException_SubServiceExceptionWithPreviousNonApplicationServiceExceptionInterfaceInASubService()
     {
-        $service = TestApplicationServiceFactory::create();
-        $response = TestApplicationServiceFactory::getResponse();
+        $service = $this->factory->create();
+        $response = $this->factory->getResponse();
         
         // If it's a SubService and it throws a non ApplicationServiceExceptionInterface exception
         // then the service should throw a SubServiceException with original exception as previous exception
@@ -346,8 +354,8 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
     
     public function test_handleException_SubServiceExceptionInASubServiceShouldReThrowException()
     {
-        $service = TestApplicationServiceFactory::create();
-        $response = TestApplicationServiceFactory::getResponse();
+        $service = $this->factory->create();
+        $response = $this->factory->getResponse();
         
         // If it's a SubService and it throws a SubServiceException
         // then the service should re-throw the exception
@@ -363,11 +371,11 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 
     public function test_handleException_ApplicationInvalidDataExceptionHandling()
     {
-        $service = TestApplicationServiceFactory::create();
+        $service = $this->factory->create();
         $entityClass = self::TEST_ENTITY;
         $entity = new $entityClass;
-        $constraintViolationList = TestApplicationServiceFactory::getConstraintViolationListMock();
-        $validationErrorsFormatterMock = TestApplicationServiceFactory::getValidationErrorsFormatterMock();
+        $constraintViolationList = $this->factory->getConstraintViolationListMock();
+        $validationErrorsFormatterMock = $this->factory->getValidationErrorsFormatterMock();
         $formattedErrors = array(
             'field'     => 'error',
             'field2'    => 'error2'

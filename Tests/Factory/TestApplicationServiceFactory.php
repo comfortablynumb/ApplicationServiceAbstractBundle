@@ -22,7 +22,7 @@ class TestApplicationServiceFactory extends WebTestCase
     
     public function getClassName()
     {
-        return 'ENC\Bundle\ApplicationServiceAbstractBundle\Service\ApplicationService';
+        return 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationService';
     }
     
     public function create($serviceClass = null, array $services = array())
@@ -121,7 +121,7 @@ class TestApplicationServiceFactory extends WebTestCase
     
     public function getNewContainer(array $services = array())
     {
-        if ($this->$container === null) {
+        if ($this->container === null) {
             if (isset($services['pm'])) {
                 $pm = $services['pm'];
             } else {

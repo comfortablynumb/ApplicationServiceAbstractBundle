@@ -20,7 +20,7 @@ class TestApplicationServiceWithRandomID extends ApplicationService
         return 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity\TestEntity';
     }
     
-    public function bindDataToObject(array $data, $object)
+    public function bindDataToObject(array $data, $object, $isNew)
     {
         return $object;
     }
