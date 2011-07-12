@@ -1,6 +1,6 @@
 <?php
 
-namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity;
+namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Fixture\Entity;
 
 use Doctrine\ORM\Mapping AS ORM;
 use Symfony\Component\Validator\Constraints as Assert;

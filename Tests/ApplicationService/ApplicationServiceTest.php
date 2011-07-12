@@ -4,6 +4,7 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService;
 
 use ENC\Bundle\ApplicationServiceAbstractBundle\Exception;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Factory\TestApplicationServiceFactory;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Factory\TestHasCollectionEntityFactory;
 
 class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
 {
@@ -11,17 +12,19 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
     const TEST_SERVICE_CLASS2 = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationService2';
     const TEST_SERVICE_CLASS_WITH_RANDOM_ID = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\ApplicationService\TestApplicationServiceWithRandomID';
     
-    const TEST_ENTITY = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity\TestEntity';
-    const TEST_ENTITY_REPOSITORY = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Entity\TestEntityRepository';
+    const TEST_ENTITY = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Fixture\Entity\TestEntity';
+    const TEST_ENTITY_REPOSITORY = 'ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Fixture\Entity\TestEntityRepository';
 
     const EXCEPTION_INVALID_DATA = 'ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationInvalidDataException';
     const EXCEPTION_SUB_SERVICE = 'ENC\Bundle\ApplicationServiceAbstractBundle\Exception\SubServiceException';
     
     protected $factory;
+    protected $entityFactory;
     
     public function setUp()
     {
         $this->factory = new TestApplicationServiceFactory();
+        $this->hasCollectionEntityFactory = new TestHasCollectionEntityFactory();
     }
     
     public function test_isValidService_returnsTrueIfItsAValidApplicationService()
@@ -398,5 +401,250 @@ class ApplicationServiceTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($response->getFieldsErrors(), $formattedErrors);
     }
 
+    public function test_bindEntitiesToObject_ifAfterNormalizeArrayOfIdsItResultsInAnEmptyArrayThenItDoesNothing()
+    {
+        $entity = $this->hasCollectionEntityFactory->create();
+        $service = $this->factory->createMock(array(
+            'doFindByPrimaryKey',
+            'normalizeEntitiesIds'
+        ));
+        $ids = array();
+        
+        $service->expects($this->once())
+            ->method('normalizeEntitiesIds')
+            ->with($this->equalTo($ids))
+            ->will($this->returnValue($ids));
+        $service->expects($this->never())
+            ->method('doFindByPrimaryKey');
+        
+        $service->bindEntitiesToObject($service, $ids, $entity, 'setCollection');
+    }
     
+    /**
+     * @expectedException ENC\Bundle\ApplicationServiceAbstractBundle\Exception\EntityNotFoundException
+     */
+    public function test_bindEntitiesToObject_ifAnEntityIsNotFoundThenWeCatchThatExceptionAndThrowAProperException()
+    {
+        $entity = $this->hasCollectionEntityFactory->create();
+        $service = $this->factory->createMock(array(
+            'doFindByPrimaryKey',
+            'normalizeEntitiesIds'
+        ));
+        $ids = array(1, 2, 3);
+        
+        $service->expects($this->once())
+            ->method('normalizeEntitiesIds')
+            ->with($this->equalTo($ids))
+            ->will($this->returnValue($ids));
+        $service->expects($this->once())
+            ->method('doFindByPrimaryKey')
+            ->will($this->throwException(new Exception\DatabaseNoResultException()));
+        
+        $service->bindEntitiesToObject($service, $ids, $entity, 'setCollection');
+    }
+    
+    /**
+     * @expectedException RuntimeException
+     */
+    public function test_bindEntitiesToObject_weOnlyCatchForDatabaseNoResultExceptionsOtherExceptionsAreNotCatched()
+    {
+        $entity = $this->hasCollectionEntityFactory->create();
+        $service = $this->factory->createMock(array(
+            'doFindByPrimaryKey',
+            'normalizeEntitiesIds'
+        ));
+        $ids = array(1, 2, 3);
+        
+        $service->expects($this->once())
+            ->method('normalizeEntitiesIds')
+            ->with($this->equalTo($ids))
+            ->will($this->returnValue($ids));
+        $service->expects($this->once())
+            ->method('doFindByPrimaryKey')
+            ->will($this->throwException(new \RuntimeException()));
+        
+        $service->bindEntitiesToObject($service, $ids, $entity, 'setCollection');
+    }
+    
+    public function test_bindEntitiesToObject_ifAnEntityIsFoundThenWeAddItToACollectionAndThenWeSetTheCollectionWithTheMethodPassed()
+    {
+        $method = 'setCollection';
+        $someEntity = $this->hasCollectionEntityFactory->create();
+        $entity = $this->hasCollectionEntityFactory->createMock(array(
+            $method,
+            'createCollection'
+        ));
+        $collectionClass = get_class($someEntity->createCollection());
+        $collectionMock = $this->getMock($collectionClass, array(
+            'add'
+        ));
+        $service = $this->factory->createMock(array(
+            'doFindByPrimaryKey',
+            'normalizeEntitiesIds',
+            'refreshEntity'
+        ));
+        $ids = array(1, 2, 3);
+        
+        $collectionMock->expects($this->exactly(count($ids)))
+            ->method('add')
+            ->with($this->equalTo($entity));
+        $service->expects($this->once())
+            ->method('normalizeEntitiesIds')
+            ->with($this->equalTo($ids))
+            ->will($this->returnValue($ids));
+        $service->expects($this->exactly(count($ids)))
+            ->method('doFindByPrimaryKey')
+            ->will($this->returnValue($entity));
+        $entity->expects($this->once())
+            ->method('createCollection')
+            ->will($this->returnValue($collectionMock));
+        $entity->expects($this->once())
+            ->method($method)
+            ->with($this->equalTo($collectionMock));
+        
+        $service->bindEntitiesToObject($service, $ids, $entity, $method);
+    }
+    
+    /**
+     * @expectedException RuntimeException
+     */
+    public function test_bindEntitiesToObject_ifObjectSetMethodDoesNotExistThenWeThrowAnException()
+    {
+        $entity = $this->hasCollectionEntityFactory->create();
+        $service = $this->factory->createMock(array(
+            'findEntityById'
+        ));
+        
+        $service->bindEntitiesToObject($service, array(), $entity, 'nonExistentMethod');
+    }
+    
+    /**
+     * @expectedException RuntimeException
+     */
+    public function test_bindEntityToObject_ifMethodDoesNotExistOnObjectWeThrowException()
+    {
+        $service = $this->factory->create();
+        $entity = $this->hasCollectionEntityFactory->create();
+        
+        $service->bindEntityToObject($service, 1, $entity, 'nonExistentMethod');
+    }
+    
+    public function test_bindEntityToObject_ifIdIsNotValidThenWeReturnFalse()
+    {
+        $id = 'nonValidId';
+        $entity = $this->hasCollectionEntityFactory->create();
+        $service = $this->factory->createMock(array(
+            'normalizeEntityId'
+        ));
+        
+        $service->expects($this->once())
+            ->method('normalizeEntityId')
+            ->with($this->equalTo($id))
+            ->will($this->returnValue(false));
+        
+        $result = $service->bindEntityToObject($service, $id, $entity, 'setCollection');
+        
+        $this->assertFalse($result);
+    }
+    
+    /**
+     * @expectedException ENC\Bundle\ApplicationServiceAbstractBundle\Exception\EntityNotFoundException
+     */
+    public function test_bindEntityToObject_ifEntityIsNotFoundWeCatchExceptionAndReThrowProperException()
+    {
+        $id = 123;
+        $entity = $this->hasCollectionEntityFactory->create();
+        $service = $this->factory->createMock(array(
+            'normalizeEntityId',
+            'doFindByPrimaryKey'
+        ));
+        
+        $service->expects($this->once())
+            ->method('normalizeEntityId')
+            ->with($this->equalTo($id))
+            ->will($this->returnValue(true));
+        $service->expects($this->once())
+            ->method('doFindByPrimaryKey')
+            ->will($this->throwException(new Exception\DatabaseNoResultException()));
+        
+        $service->bindEntityToObject($service, $id, $entity, 'setCollection');
+    }
+    
+    public function test_bindEntityToObject_ifIdIsValidAndEntityIsFoundThenWeSetTheEntityOnTheObjectAndThenWeReturnTrue()
+    {
+        $id = 1234;
+        $setMethod = 'setEntity';
+        $entity = $this->hasCollectionEntityFactory->createMock(array(
+            $setMethod
+        ));
+        $service = $this->factory->createMock(array(
+            'normalizeEntityId',
+            'refreshEntity',
+            'doFindByPrimaryKey'
+        ));
+        
+        $service->expects($this->once())
+            ->method('normalizeEntityId')
+            ->with($this->equalTo($id))
+            ->will($this->returnValue($id));
+        $service->expects($this->once())
+            ->method('doFindByPrimaryKey')
+            ->with($this->equalTo($id))
+            ->will($this->returnValue($entity));
+        $service->expects($this->once())
+            ->method('refreshEntity')
+            ->with($this->equalTo($entity));
+        $entity->expects($this->once())
+            ->method($setMethod)
+            ->with($this->equalTo($entity));
+        
+        $result = $service->bindEntityToObject($service, $id, $entity, $setMethod);
+        
+        $this->assertTrue($result);
+    }
+    
+    public function test_normalizeEntityId_ifItsNotAScalarOrIsAnEmptyStringOrIsNotANumberOrIsLessThanZeroItReturnsFalse()
+    {
+        $service = $this->factory->create();
+        
+        $this->assertFalse($service->normalizeEntityId(''));
+        $this->assertFalse($service->normalizeEntityId('  '));
+        $this->assertFalse($service->normalizeEntityId('a'));
+        $this->assertFalse($service->normalizeEntityId('-1'));
+        $this->assertFalse($service->normalizeEntityId(array()));
+    }
+    
+    public function test_normalizeEntityId_ifIsAValidNumberStringThenItCastsItToIntegerAndReturnsIt()
+    {
+        $service = $this->factory->create();
+        
+        $id = $service->normalizeEntityId('123');
+        $this->assertInternalType('integer', $id);
+        $this->assertEquals(123, $id);
+    }
+    
+    public function test_normalizeEntitiesIds_ifPassedAnEmptyArrayItDoesNothing()
+    {
+        $ids = array();
+        $service = $this->factory->createMock(array(
+            'normalizeEntityId'
+        ));
+        
+        $service->expects($this->never())
+            ->method('normalizeEntityId');
+        
+        $ids = $service->normalizeEntitiesIds($ids);
+    }
+    
+    public function test_normalizeEntitiesIds_callsNormalizeEntityIdForEachArgumentAndIfSecondArgumentIsTrueItOnlyAllowsUniqueValues()
+    {
+        $ids = array('invalidId', 1, 1, 1, 'invalidId');
+        $idsShouldBe = array(1);
+        $service = $this->factory->create();
+        
+        $ids = $service->normalizeEntitiesIds($ids);
+        
+        $this->assertInternalType('array', $ids);
+        $this->assertEquals($idsShouldBe, $ids);
+    }
 }

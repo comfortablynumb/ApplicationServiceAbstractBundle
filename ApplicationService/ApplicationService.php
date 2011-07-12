@@ -2,6 +2,7 @@
 
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\ApplicationService;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\ObjectManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
@@ -23,6 +24,7 @@ use ENC\Bundle\ApplicationServiceAbstractBundle\Event;
 use ENC\Bundle\ApplicationServiceAbstractBundle\FinderQueryBuilder;
 use ENC\Bundle\ApplicationServiceAbstractBundle\ValidationErrorsFormatter\ValidationErrorsFormatterInterface;
 use ENC\Bundle\ApplicationServiceAbstractBundle\Data\DataHolder;
+use ENC\Bundle\ApplicationServiceAbstractBundle\Entity\HasCollectionInterface;
 
 abstract class ApplicationService implements ApplicationServiceInterface
 {
@@ -368,9 +370,98 @@ abstract class ApplicationService implements ApplicationServiceInterface
     
     public function bindDataToObject(array $data, $object, $isNew)
     {
-        $this->validateObjectIsAnInstanceOfEntityClass( $object );
+        $this->validateObjectIsAnInstanceOfEntityClass($object);
         
         return $object;
+    }
+    
+    public function bindEntityToObject(ApplicationServiceInterface $service, $id, $object, $setterMethod)
+    {
+        if (!method_exists($object, $setterMethod)) {
+            throw new \RuntimeException(sprintf('Method "%s::%s" does not exist.', get_class($object), $setterMethod));
+        }
+        
+        $id = $this->normalizeEntityId($id);
+        
+        if ($id) {
+            try {
+                $entity = $service->doFindByPrimaryKey($id);
+                
+                $service->refreshEntity($entity);
+                
+                $object->$setterMethod($entity);
+                
+                return true;
+            } catch (Exception\DatabaseNoResultException $e) {
+                throw new Exception\EntityNotFoundException(sprintf('La entidad con ID "%s" no se ha encontrado. Tal vez alguien la elimino mientras usted ejecutaba la accion.', $id));
+            }
+        } else {
+            return false;
+        }
+    }
+    
+    public function bindEntitiesToObject(ApplicationServiceInterface $service, array $entitiesIDs, HasCollectionInterface $object, $objectSetMethod)
+    {
+        $ids = $this->normalizeEntitiesIds($entitiesIDs);
+        
+        if (!method_exists($object, $objectSetMethod)) {
+            throw new \RuntimeException(sprintf('Method "%s::%s" does not exist.', get_class($object), $objectSetMethod));
+        }
+        
+        try {
+            $collection = $object->createCollection();
+            
+            if (!($collection instanceof Collection)) {
+                throw new \RuntimeException(sprintf('Object of class "%s" implementing "%s" must return from method "%s" a "%s" collection',
+                    get_class($object),
+                    'HasCollectionInterface',
+                    'createCollection',
+                    'Collection'
+                ));
+            }
+            
+            foreach ($ids as $key => $id) {
+                $entity = $service->doFindByPrimaryKey($id);
+            
+                $service->refreshEntity($entity);
+                
+                $collection->add($entity);
+            }
+            
+            $object->$objectSetMethod($collection);
+        } catch (Exception\DatabaseNoResultException $e) {
+            $msg = sprintf('La entidad con ID "%s" no fue encontrada. Tal vez alguien la elimino mientras usted ejecutaba la accion.', $id);
+            
+            throw new Exception\EntityNotFoundException($msg);
+        }
+    }
+    
+    public function normalizeEntityId($id)
+    {
+        if (is_scalar($id) && trim($id) !== '' && preg_match('/[0-9]/', $id) && $id > 0) {
+            return (int) $id;
+        } else {
+            return false;
+        }
+    }
+    
+    public function normalizeEntitiesIds(array $ids, $unique = true)
+    {
+        $normalizedIds = array();
+        
+        foreach ($ids as $id) {
+            $id = $this->normalizeEntityId($id);
+            
+            if ($id) {
+                if ($unique && in_array($id, $normalizedIds)) {
+                    continue;
+                } else {
+                    $normalizedIds[] = $id;
+                }
+            }
+        }
+        
+        return $normalizedIds;
     }
 
     public function handleException(\Exception $e)
