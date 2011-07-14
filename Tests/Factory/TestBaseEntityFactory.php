@@ -2,7 +2,9 @@
 
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\Tests\Factory;
 
-abstract class TestBaseEntityFactory extends \PHPUnit_Framework_TestCase
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+abstract class TestBaseEntityFactory extends WebTestCase
 {
     public function create(array $data = array())
     {

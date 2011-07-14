@@ -113,6 +113,11 @@ class PersistenceManager extends PersistenceManagerAbstract
     {
         $this->getConnection()->rollback();
     }
+    
+    public function isTransactionActive()
+    {
+        return $this->getConnection()->isTransactionActive();
+    }
 }
 
 

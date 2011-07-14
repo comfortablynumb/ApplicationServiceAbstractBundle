@@ -980,7 +980,9 @@ abstract class ApplicationService implements ApplicationServiceInterface
         }
         catch ( \Exception $e )
         {
-            $pm->rollbackTransaction();
+            if ($pm->isTransactionActive()) {
+                $pm->rollbackTransaction();
+            }
 
             if (!$this->isSubService()) {
                 $pm->close();
@@ -994,29 +996,30 @@ abstract class ApplicationService implements ApplicationServiceInterface
     {
         $pm = $this->getPersistenceManager();
         
-        try
-        {
+        try {
             $pm->beginTransaction();
+            $object = $this->doFindByPrimaryKey($id, $lockMode, $lockVersion);
             
-            $object = $this->getRepository()->find( $id, $lockMode, $lockVersion );
+            $pm->remove($object);
             
-            $pm->remove( $object );
-            
-            if ( $this->isFlushAutomatic() )
-            {
+            if ($this->isFlushAutomatic()) {
                 $pm->flush();
             }
             
             // Notificamos el evento "pre_commit"
-            $this->notifyPreCommitEvent( 'remove', array(), $object );
+            $action = 'remove';
+            $data = array('id' => $id);
+            $this->notifyPreCommitEvent($action, $data, $object);
             
             $pm->commitTransaction();
             
-            $this->notifyPostCommitEvent( $action, $data, $object );
-        }
-        catch ( \Exception $e )
-        {
-            $pm->rollbackTransaction();
+            $this->notifyPostCommitEvent($action, $data, $object);
+        } catch (Exception\DatabaseNoResultException $e) {
+            throw new Exception\EntityNotFoundException('La entidad que se desea eliminar no se encuentra en la base de datos. Tal vez usted ya no tiene permisos para verla, u otra persona la ha eliminado antes.');
+        } catch (\Exception $e) {
+            if ($pm->isTransactionActive()) {
+                $pm->rollbackTransaction();
+            }
 
             if (!$this->isSubService()) {
                 $pm->close();
