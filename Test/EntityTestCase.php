@@ -4,18 +4,28 @@ namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test;
 
 class EntityTestCase extends TestCase
 {
-    public function runEntityValidationTests(array $data, $entity, $errorMessageFormat = null)
+    public function runEntityValidationErrorTest(array $data, $entity, $errorMessageFormat = null)
+    {
+        $this->runEntityValidationTest(false, $data, $entity, $errorMessageFormat);
+    }
+    
+    public function runEntityValidationSuccessTest(array $data, $entity, $errorMessageFormat = null)
+    {
+        $this->runEntityValidationTest(true, $data, $entity, $errorMessageFormat);
+    }
+    
+    public function runEntityValidationTest($testForSuccess = false, array $data, $entity, $errorMessageFormat = null)
     {
         $constraintViolationList = $this->validator->validate($entity);
         
         foreach ($data as $field => $invalidValue) {
-            $ok = false;
+            $ok = $testForSuccess ? true : false;
             
             foreach ($constraintViolationList as $constraintViolation) {
                 $propertyPath = $constraintViolation->getPropertyPath();
                 
                 if ($field === $propertyPath || $field === substr($propertyPath, 0, strpos($propertyPath, '.'))) {
-                    $ok = true;
+                    $ok = $testForSuccess ? false : true;
                     
                     break;
                 }
