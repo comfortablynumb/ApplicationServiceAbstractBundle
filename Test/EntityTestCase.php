@@ -2,7 +2,7 @@
 
 namespace ENC\Bundle\ApplicationServiceAbstractBundle\Test;
 
-class EntityTestCase extends TestCase
+class EntityTestCase extends WebTestCase
 {
     public function runEntityValidationErrorTest(array $data, $entity, $errorMessageFormat = null)
     {
