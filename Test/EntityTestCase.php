@@ -20,18 +20,20 @@ class EntityTestCase extends WebTestCase
         
         foreach ($data as $field => $invalidValue) {
             $ok = $testForSuccess ? true : false;
+            $errorMessage = null;
             
             foreach ($constraintViolationList as $constraintViolation) {
                 $propertyPath = $constraintViolation->getPropertyPath();
                 
                 if ($field === $propertyPath || $field === substr($propertyPath, 0, strpos($propertyPath, '.'))) {
                     $ok = $testForSuccess ? false : true;
+                    $errorMessage = is_null($errorMessageFormat) ? null : strtr($errorMessageFormat, array('%field%' => $field, '%errorMessage%' => '"'.$constraintViolation->getMessageTemplate().'"'));
                     
                     break;
                 }
             }
             
-            $this->assertTrue($ok, is_null($errorMessageFormat) ? null : str_replace('%field%', $field, $errorMessageFormat));
+            $this->assertTrue($ok, $errorMessage);
         }
     }
 }
