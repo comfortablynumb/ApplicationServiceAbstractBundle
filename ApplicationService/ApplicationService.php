@@ -1499,8 +1499,17 @@ abstract class ApplicationService implements ApplicationServiceInterface
             case 'on':
             case 'true':
                 return true;
-            default:
+                
+                break;
+            case 'no':
+            case '0':
+            case 'off':
+            case 'false':
                 return false;
+                
+                break;
+            default:
+                return null;
         }
     }
     
