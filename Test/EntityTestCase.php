@@ -16,7 +16,11 @@ class EntityTestCase extends WebTestCase
     
     public function runEntityValidationTest($testForSuccess = false, array $data, $entity, $errorMessageFormat = null)
     {
-        $constraintViolationList = $this->validator->validate($entity);
+        try {
+            $constraintViolationList = $this->validator->validate($entity);
+        } catch (\Exception $e) {
+            $this->fail('There has been an exception while validation an entity: '.$e->getMessage());
+        }
         
         foreach ($data as $field => $invalidValue) {
             $ok = $testForSuccess ? true : false;
