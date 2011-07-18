@@ -28,7 +28,7 @@ class TestApplicationServiceFactory extends WebTestCase
     public function create($serviceClass = null, array $services = array())
     {
         if (is_null($serviceClass)) {
-            $serviceClass = $this->testServiceClass1;
+            $serviceClass = $this->getClassName();
         }
         
         $container = $this->getNewContainer($services);
