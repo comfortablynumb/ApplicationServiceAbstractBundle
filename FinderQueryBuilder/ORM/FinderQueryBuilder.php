@@ -234,10 +234,12 @@ class FinderQueryBuilder extends FinderQueryBuilderAbstract
                 
                 break;
             case self::FILTER_IS_NULL:
-                foreach ($data as $index => $field) {
-                    $this->validateField($field);
+                foreach ($data as $index => $fieldsAndValues) {
+                    foreach ($fieldsAndValues as $field => $value) {
+                        $this->validateField($field);
                         
-                    $expressions[] = $this->getIsNullExpression($qb, $field);
+                        $expressions[] = $this->getIsNullExpression($qb, $field);
+                    }
                 }
                 
                 break;
@@ -398,7 +400,7 @@ class FinderQueryBuilder extends FinderQueryBuilderAbstract
     {
         $field = strpos($field, '.') === false ? $this->getEntityDqlAlias().'.'.$field : $field;
         
-        return sprintf('%s.%s IS NULL', $field);
+        return sprintf('%s IS NULL', $field);
     }
     
     public function createQueryBuilder()
