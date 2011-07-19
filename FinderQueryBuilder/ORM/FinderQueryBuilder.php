@@ -15,6 +15,7 @@ class FinderQueryBuilder extends FinderQueryBuilderAbstract
     const FILTER_AND            = ':AND:';
     const FILTER_OR             = ':OR:';
     const FILTER_MEMBER_OF      = ':MEMBER_OF:';
+    const FILTER_IS_NULL        = ':IS_NULL:';
 
     public function setFilterOperators()
     {
@@ -25,6 +26,7 @@ class FinderQueryBuilder extends FinderQueryBuilderAbstract
         $this->filterOperators[] = self::FILTER_AND;
         $this->filterOperators[] = self::FILTER_OR;
         $this->filterOperators[] = self::FILTER_MEMBER_OF;
+        $this->filterOperators[] = self::FILTER_IS_NULL;
     }
 
     public function create(array $filters = array(), $start = null, $limit = null, $orderBy = null, $orderType = null, $onlyCount = false, $qb = null)
@@ -231,6 +233,14 @@ class FinderQueryBuilder extends FinderQueryBuilderAbstract
                 }
                 
                 break;
+            case self::FILTER_IS_NULL:
+                foreach ($data as $index => $field) {
+                    $this->validateField($field);
+                        
+                    $expressions[] = $this->getIsNullExpression($qb, $field);
+                }
+                
+                break;
             default:
                 throw new Exception\FinderQueryBuilder\InvalidFilterOperatorException(sprintf('El operador de filtro "%s" es inválido.', $filterOperator));
                 
@@ -382,6 +392,13 @@ class FinderQueryBuilder extends FinderQueryBuilderAbstract
         }
 
         return $expr;
+    }
+    
+    public function getIsNullExpression($qb, $field)
+    {
+        $field = strpos($field, '.') === false ? $this->getEntityDqlAlias().'.'.$field : $field;
+        
+        return sprintf('%s.%s IS NULL', $field);
     }
     
     public function createQueryBuilder()
