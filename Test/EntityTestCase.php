@@ -24,7 +24,7 @@ class EntityTestCase extends WebTestCase
         
         foreach ($data as $field => $invalidValue) {
             $ok = $testForSuccess ? true : false;
-            $errorMessage = $testForSuccess ? null : 'If this message is shown then it means no errors were thrown, although there were some errors expected to be thrown.';
+            $errorMessage = $testForSuccess ? null : 'If this message is shown then it means no errors were thrown, although there were some errors expected for field "%fieldWithoutErrors%" to be thrown.';
             
             foreach ($constraintViolationList as $constraintViolation) {
                 $propertyPath = $constraintViolation->getPropertyPath();
@@ -37,7 +37,7 @@ class EntityTestCase extends WebTestCase
                 }
             }
             
-            $this->assertTrue($ok, $errorMessage);
+            $this->assertTrue($ok, str_replace('%fieldWithoutErrors%', $field, $errorMessage));
         }
     }
 }
