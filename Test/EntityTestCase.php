@@ -23,6 +23,10 @@ class EntityTestCase extends WebTestCase
         }
         
         foreach ($data as $field => $invalidValue) {
+            if (is_array($invalidValue) && isset($invalidValue['skip']) && $invalidValue['skip'] === true) {
+                continue;
+            }
+            
             $ok = $testForSuccess ? true : false;
             $errorMessage = $testForSuccess ? null : 'If this message is shown then it means no errors were thrown, although there were some errors expected for field "%fieldWithoutErrors%" to be thrown.';
             
