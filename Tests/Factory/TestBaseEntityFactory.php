@@ -8,8 +8,11 @@ abstract class TestBaseEntityFactory extends WebTestCase
 {
     public function create(array $data = array())
     {
-        $class = $this->getClassName();
-        
+        return $this->createForClass($this->getClassName(), $data);
+    }
+    
+    public function createForClass($class, array $data = array())
+    {
         $entity = new $class();
         
         foreach ($data as $field => $value) {
@@ -23,7 +26,12 @@ abstract class TestBaseEntityFactory extends WebTestCase
     
     public function createMock(array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
     {
-        $mock = $this->getMock($this->getClassName(), $methods, $constructorParameters, $className, $constructorCall);
+        return $this->createMockForClass($this->getClassName(), $methods, $constructorParameters, $className, $constructorCall);
+    }
+    
+    public function createMockForClass($class, array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
+    {
+        $mock = $this->getMock($class, $methods, $constructorParameters, $className, $constructorCall);
         
         return $mock;
     }
