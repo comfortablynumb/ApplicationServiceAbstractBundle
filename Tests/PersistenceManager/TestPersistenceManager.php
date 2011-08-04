@@ -110,4 +110,9 @@ class TestPersistenceManager implements PersistenceManagerInterface
 	public function setPersistenceManager( $persistenceManager )
 	{
 	}
+    
+    public function isTransactionActive()
+    {
+        return false;
+    }
 }
