@@ -44,4 +44,9 @@ class PersistenceManager extends PersistenceManagerAbstract
     public function rollbackTransaction()
     {
     }
+    
+    public function isTransactionActive()
+    {
+        return false;
+    }
 }

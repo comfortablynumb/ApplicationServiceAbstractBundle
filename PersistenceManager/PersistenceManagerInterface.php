@@ -119,4 +119,6 @@ interface PersistenceManagerInterface
      * @param object
      */
     function remove($object);
+    
+    function isTransactionActive();
 }
