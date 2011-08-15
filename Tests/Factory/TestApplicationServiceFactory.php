@@ -37,9 +37,9 @@ class TestApplicationServiceFactory extends WebTestCase
         return $service;
     }
     
-    public function createMock(array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
+    public function createMock($testCase, array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
     {
-        $mock = $this->getMock($this->getClassName(), $methods, $constructorParameters, $className, $constructorCall);
+        $mock = $testCase->getMock($this->getClassName(), $methods, $constructorParameters, $className, $constructorCall);
         
         return $mock;
     }
