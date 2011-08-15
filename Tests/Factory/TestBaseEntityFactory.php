@@ -24,14 +24,14 @@ abstract class TestBaseEntityFactory extends WebTestCase
         return $entity;
     }
     
-    public function createMock(array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
+    public function createMock($testCase, array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
     {
-        return $this->createMockForClass($this->getClassName(), $methods, $constructorParameters, $className, $constructorCall);
+        return $this->createMockForClass($testCase, $this->getClassName(), $methods, $constructorParameters, $className, $constructorCall);
     }
     
-    public function createMockForClass($class, array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
+    public function createMockForClass($testCase, $class, array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
     {
-        $mock = $this->getMock($class, $methods, $constructorParameters, $className, $constructorCall);
+        $mock = $this->getMock($testCase, $class, $methods, $constructorParameters, $className, $constructorCall);
         
         return $mock;
     }
