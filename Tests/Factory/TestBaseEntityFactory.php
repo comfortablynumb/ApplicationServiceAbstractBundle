@@ -31,7 +31,7 @@ abstract class TestBaseEntityFactory extends WebTestCase
     
     public function createMockForClass($testCase, $class, array $methods = array(), array $constructorParameters = array(), $className = '', $constructorCall = false)
     {
-        $mock = $this->getMock($testCase, $class, $methods, $constructorParameters, $className, $constructorCall);
+        $mock = $testCase->getMock($class, $methods, $constructorParameters, $className, $constructorCall);
         
         return $mock;
     }
