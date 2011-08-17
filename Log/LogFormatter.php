@@ -12,22 +12,76 @@ class LogFormatter implements LogFormatterInterface
     public function process(ApplicationServiceInterface $service, \Exception $e, array $arguments = array())
     {
         $request = $service->getServiceRequest();
+        
+        if ($e instanceof \ENC\Bundle\ApplicationServiceAbstractBundle\Exception\ApplicationInvalidDataException) {
+            return sprintf('The user has entered invalid data.'.PHP_EOL.
+                self::LEFT_PADDING.'[Service Class] %s'.PHP_EOL.
+                self::LEFT_PADDING.'[URI] %s'.PHP_EOL.
+                self::LEFT_PADDING.'[IP Address] %s'.PHP_EOL,
+                    get_class($service),
+                    $request->getUri(),
+                    $request->getClientIp());
+        }
+        
         $requestContent = $this->formatRequestContent($request);
         
-        $msg = sprintf('%s'.PHP_EOL.self::LEFT_PADDING.'[Service Class] %s'.PHP_EOL.self::LEFT_PADDING.'[Ip Address] %s'.PHP_EOL.
-            self::LEFT_PADDING.'[HTTP Method] %s'.PHP_EOL.self::LEFT_PADDING.'[URL] %s'.PHP_EOL.PHP_EOL.self::LEFT_PADDING.'[Exception Class] %s'.PHP_EOL.
-            self::LEFT_PADDING.'[Exception Trace] %s'.PHP_EOL.self::LEFT_PADDING.'[Script Name] %s'.PHP_EOL.self::LEFT_PADDING.'[Request Raw] %s'.PHP_EOL.self::END_LINE.PHP_EOL,
-            $e->getMessage(),
+        $msg = sprintf(
+            PHP_EOL.
+            self::LEFT_PADDING.'[Exception(s)]'.PHP_EOL.
+            '%s'.PHP_EOL.
+            self::LEFT_PADDING.'[Service Class] %s'.PHP_EOL.
+            self::LEFT_PADDING.'[Ip Address] %s'.PHP_EOL.
+            self::LEFT_PADDING.'[HTTP Method] %s'.PHP_EOL.
+            self::LEFT_PADDING.'[URL] %s'.PHP_EOL.PHP_EOL.
+            self::LEFT_PADDING.'[Script Name] %s'.PHP_EOL.
+            self::LEFT_PADDING.'[Request Raw] %s'.PHP_EOL.
+            self::END_LINE.PHP_EOL,
+            $this->formatException($e),
             get_class($service),
             $request->getClientIp(),
             $request->getMethod(),
             $request->getUri(),
-            get_class($e),
-            $this->formatExceptionTrace($e),
             $request->getScriptName(),
             $requestContent);
         
         return $msg;
+    }
+    
+    protected function formatException($e, $multiplyPadding = 2)
+    {
+        $padding = str_repeat(self::LEFT_PADDING, $multiplyPadding);
+        $content = sprintf($padding.'=== Exception %s ==='.PHP_EOL.
+            $padding.'[Exception Message] %s'.PHP_EOL.
+            $padding.'[Exception Class] %s'.PHP_EOL.
+            $padding.'[Exception Trace] %s'.PHP_EOL.
+            $padding.'[Previous Exceptions] %s'.PHP_EOL.
+            $padding,
+                $multiplyPadding - 1,
+                $e->getMessage(),
+                get_class($e),
+                $this->formatExceptionTrace($e, ++$multiplyPadding),
+                $this->formatPreviousExceptions($e, $multiplyPadding)
+        );
+        
+        return $content;
+    }
+    
+    protected function formatPreviousExceptions($e, $multiplyPadding)
+    {
+        $content = '';
+        $previous = $e->getPrevious();
+        
+        while ($previous !== null) {
+            $content .= PHP_EOL.$this->formatException($previous, $multiplyPadding);
+            
+            $previous = $previous->getPrevious();
+        }
+        
+        if ($content === '') {
+            $content = 'There\'s no previous Exceptions.';
+        }
+        
+        return $content;
     }
     
     protected function formatRequestContent($request)
@@ -42,11 +96,11 @@ class LogFormatter implements LogFormatterInterface
         return $content;
     }
     
-    protected function formatExceptionTrace(\Exception $e) 
+    protected function formatExceptionTrace(\Exception $e, $multiplyPadding = 2) 
     {
         $trace = $e->getTrace();
         $result = "\n";
-        $padding = self::LEFT_PADDING.self::LEFT_PADDING;
+        $padding = str_repeat(self::LEFT_PADDING, $multiplyPadding);
         $counter = 1;
         
         foreach ($trace as $index => $item) {
